@@ -437,11 +437,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     # `value_tensor` = [B, S, N, H]
     value_tensor = self._value_dense(value)
 
-    print ('query_tensor', query_tensor)
-    tf.print('query_tensor', query_tensor)
-    print ('attention attention_mask', attention_mask)
-    tf.print('attention attention_mask', attention_mask)
-
     attention_output, attention_scores = self._compute_attention(
         query_tensor, key_tensor, value_tensor, attention_mask)
     attention_output = self._output_dense(attention_output)

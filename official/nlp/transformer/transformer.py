@@ -243,8 +243,6 @@ class Transformer(tf.keras.Model):
 
       attention_bias = self._bias_convert(attention_bias)
       attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
-      print ('decode attention_mask', attention_mask)
-      tf.print('decode attention_mask', attention_mask)
       decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
           length, dtype=self.params["dtype"])
       decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
@@ -695,14 +693,10 @@ class TransformerDecoder(tf.keras.layers.Layer):
       encoder_outputs = [encoder_outputs]
 
     output_tensor = decoder_inputs
-    print ('decoder_inputs', decoder_inputs)
-    tf.print('decoder_inputs', decoder_inputs)
     self_attention_mask = decoder_self_attention_bias
     attention_mask = attention_bias
     for layer_idx in range(self.params["num_hidden_layers"]):
-      print ('encoder_outputs', encoder_outputs)
       memory = encoder_outputs[-1]
-      print ('memory', memory)
       transformer_inputs = [
           output_tensor, memory, attention_mask, self_attention_mask
       ]
