@@ -644,7 +644,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
     for i in range(self.params["num_hidden_layers"]):
       self.decoder_layers.append(
           transformer.TransformerDecoderLayer(
-              num_attention_heads=self.params["num_attention_heads"],
+              num_attention_heads=self.params["num_heads"],
               intermediate_size=self.params["intermediate_size"],
               intermediate_activation="relu",
               dropout_rate=self.params["relu_dropout"],
