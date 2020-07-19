@@ -22,7 +22,9 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from official.modeling import tf_utils
 from official.nlp.modeling.layers import position_embedding
+from official.nlp.modeling.layers import transformer
 from official.nlp.modeling.ops import beam_search
 from official.nlp.transformer import attention_layer
 from official.nlp.transformer import embedding_layer
@@ -92,6 +94,20 @@ class Transformer(tf.keras.Model):
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
 
+  def build(self, unused_input_shapes):
+    """Implements build() for the layer."""
+    self.layers = []
+    for i in range(self.params["num_hidden_layers"]):
+      self.layers.append(
+          transformer.TransformerDecoderLayer(
+              num_attention_heads=self.params["num_attention_heads"],
+              intermediate_size=self.params["intermediate_size"],
+              intermediate_activation="relu",
+              dropout_rate=self.params["relu_dropout"],
+              attention_dropout_rate=self.params["attention_dropout"],
+              name=("layer_%d" % i)))
+    super(Transformer, self).build(unused_input_shapes)
+
   def get_config(self):
     return {
         "params": self.params,
@@ -151,6 +167,21 @@ class Transformer(tf.keras.Model):
       else:
         logits = self.decode(targets, encoder_outputs, attention_bias, training)
         return logits
+
+  def _bias_convert(self, bias):
+    tf.where(bias < 0, tf.zeros_like(bias), tf.ones_like(bias))
+
+  def _to_bert_self_attention_mask(self, matrix, batch_size):
+    """[1, 1, target_len, target_len] -> [bs, target_len, target_len]."""
+    matrix = tf.squeeze(matrix, axis=[1])
+    matrix = tf.tile(matrix, [batch_size, 1, 1])
+    return matrix
+
+  def _to_bert_encdec_attention_mask(self, matrix, decoder_length):
+    """[bs, 1, 1, input_len] -> [bs, target_len, input_len]."""
+    matrix = tf.squeeze(matrix, axis=[1])
+    matrix = tf.tile(matrix, [1, decoder_length, 1])
+    return matrix
 
   def encode(self, inputs, attention_bias, training):
     """Generate continuous representation for inputs.
@@ -216,15 +247,49 @@ class Transformer(tf.keras.Model):
         decoder_inputs = tf.nn.dropout(
             decoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
-      # Run values
+      cache = None
+      decode_loop_step = None
+
+      decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
+      batch_size = decoder_shape[0]
+      decoder_length = decoder_shape[1]
+
+      attention_bias = self._bias_convert(attention_bias)
+      attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+
       decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
           length, dtype=self.params["dtype"])
-      outputs = self.decoder_stack(
-          decoder_inputs,
-          encoder_outputs,
-          decoder_self_attention_bias,
-          attention_bias,
-          training=training)
+      decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
+      self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
+
+
+
+      # outputs = self.decoder_stack(
+      #     decoder_inputs,
+      #     encoder_outputs,
+      #     decoder_self_attention_bias,
+      #     attention_bias,
+      #     training=training)
+      output_tensor = decoder_inputs
+      for layer_idx in range(self.params["num_hidden_layers"]):
+        if self.attend_to_last_layer:
+          memory = encoder_outputs[-1]
+        else:
+          memory = encoder_outputs[layer_idx]
+        transformer_inputs = [
+            output_tensor, memory, attention_mask, self_attention_mask
+        ]
+        # Gets the cache for decoding.
+        if cache is None:
+          output_tensor, _ = self.layers[layer_idx](transformer_inputs)
+        else:
+          cache_layer_idx = str(layer_idx)
+          output_tensor, cache[cache_layer_idx] = self.layers[layer_idx](
+              transformer_inputs,
+              cache=cache[cache_layer_idx],
+              decode_loop_step=decode_loop_step)
+
+      outputs = output_tensor
       logits = self.embedding_softmax_layer(outputs, mode="linear")
       logits = tf.cast(logits, tf.float32)
       return logits
@@ -272,14 +337,47 @@ class Transformer(tf.keras.Model):
 
         self_attention_bias = decoder_self_attention_bias[:, :, i:i + 1, :i + 1]
 
-      decoder_outputs = self.decoder_stack(
-          decoder_input,
-          cache.get("encoder_outputs"),
-          self_attention_bias,
-          cache.get("encoder_decoder_attention_bias"),
-          training=training,
-          cache=cache,
-          decode_loop_step=i if self.params["padded_decode"] else None)
+      decoder_shape = tf_utils.get_shape_list(decoder_input, expected_rank=3)
+      batch_size = decoder_shape[0]
+      decoder_length = decoder_shape[1]
+
+      attention_bias = self._bias_convert(cache.get("encoder_decoder_attention_bias"))
+      attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+
+      self_attention_bias = self._bias_convert(self_attention_bias)
+      self_attention_mask = self._to_bert_self_attention_mask(self_attention_bias, batch_size)
+
+
+      # decoder_outputs = self.decoder_stack(
+      #     decoder_input,
+      #     cache.get("encoder_outputs"),
+      #     self_attention_bias,
+      #     cache.get("encoder_decoder_attention_bias"),
+      #     training=training,
+      #     cache=cache,
+      #     decode_loop_step=i if self.params["padded_decode"] else None)
+      output_tensor = decoder_input
+      encoder_outputs = cache.get("encoder_outputs")
+      decode_loop_step = i
+      for layer_idx in range(self.params["num_hidden_layers"]):
+        if self.attend_to_last_layer:
+          memory = encoder_outputs[-1]
+        else:
+          memory = encoder_outputs[layer_idx]
+        transformer_inputs = [
+            output_tensor, memory, attention_mask, self_attention_mask
+        ]
+        # Gets the cache for decoding.
+        if cache is None:
+          output_tensor, _ = self.layers[layer_idx](transformer_inputs)
+        else:
+          cache_layer_idx = str(layer_idx)
+          output_tensor, cache[cache_layer_idx] = self.layers[layer_idx](
+              transformer_inputs,
+              cache=cache[cache_layer_idx],
+              decode_loop_step=decode_loop_step)
+
+      decoder_outputs = output_tensor
       logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
       logits = tf.squeeze(logits, axis=[1])
       return logits, cache
