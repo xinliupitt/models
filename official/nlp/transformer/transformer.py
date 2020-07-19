@@ -156,7 +156,7 @@ class Transformer(tf.keras.Model):
         return logits
 
   def _bias_convert(self, bias):
-    tf.where(bias < 0, tf.zeros_like(bias), tf.ones_like(bias))
+    return tf.where(bias < 0, tf.zeros_like(bias), tf.ones_like(bias))
 
   def _to_bert_self_attention_mask(self, matrix, batch_size):
     """[1, 1, target_len, target_len] -> [bs, target_len, target_len]."""
