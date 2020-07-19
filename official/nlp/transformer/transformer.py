@@ -91,6 +91,7 @@ class Transformer(tf.keras.Model):
         params["vocab_size"], params["hidden_size"])
     self.encoder_stack = EncoderStack(params)
     self.decoder_stack = DecoderStack(params)
+    self.decoder_layer = TransformerDecoder(params)
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
 
@@ -271,25 +272,13 @@ class Transformer(tf.keras.Model):
       #     attention_bias,
       #     training=training)
       output_tensor = decoder_inputs
-      for layer_idx in range(self.params["num_hidden_layers"]):
-        if self.attend_to_last_layer:
-          memory = encoder_outputs[-1]
-        else:
-          memory = encoder_outputs[layer_idx]
-        transformer_inputs = [
-            output_tensor, memory, attention_mask, self_attention_mask
-        ]
-        # Gets the cache for decoding.
-        if cache is None:
-          output_tensor, _ = self.decoder_layers[layer_idx](transformer_inputs)
-        else:
-          cache_layer_idx = str(layer_idx)
-          output_tensor, cache[cache_layer_idx] = self.decoder_layers[layer_idx](
-              transformer_inputs,
-              cache=cache[cache_layer_idx],
-              decode_loop_step=decode_loop_step)
 
-      outputs = output_tensor
+      outputs = self.decoder_layer(
+          decoder_inputs,
+          encoder_outputs,
+          self_attention_mask,
+          attention_mask)
+
       logits = self.embedding_softmax_layer(outputs, mode="linear")
       logits = tf.cast(logits, tf.float32)
       return logits
@@ -356,28 +345,15 @@ class Transformer(tf.keras.Model):
       #     training=training,
       #     cache=cache,
       #     decode_loop_step=i if self.params["padded_decode"] else None)
-      output_tensor = decoder_input
-      encoder_outputs = cache.get("encoder_outputs")
-      decode_loop_step = i
-      for layer_idx in range(self.params["num_hidden_layers"]):
-        if self.attend_to_last_layer:
-          memory = encoder_outputs[-1]
-        else:
-          memory = encoder_outputs[layer_idx]
-        transformer_inputs = [
-            output_tensor, memory, attention_mask, self_attention_mask
-        ]
-        # Gets the cache for decoding.
-        if cache is None:
-          output_tensor, _ = self.decoder_layers[layer_idx](transformer_inputs)
-        else:
-          cache_layer_idx = str(layer_idx)
-          output_tensor, cache[cache_layer_idx] = self.decoder_layers[layer_idx](
-              transformer_inputs,
-              cache=cache[cache_layer_idx],
-              decode_loop_step=decode_loop_step)
 
-      decoder_outputs = output_tensor
+      decoder_outputs = self.decoder_layer(
+          decoder_input,
+          cache.get("encoder_outputs"),
+          self_attention_mask,
+          attention_mask,
+          cache=cache,
+          decode_loop_step=i if self.params["padded_decode"] else None)
+
       logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
       logits = tf.squeeze(logits, axis=[1])
       return logits, cache
@@ -659,3 +635,93 @@ class DecoderStack(tf.keras.layers.Layer):
               decoder_inputs, training=training)
 
     return self.output_normalization(decoder_inputs)
+
+
+class TransformerDecoder(tf.keras.layers.Layer):
+  """Transformer decoder stack.
+
+  Like the encoder stack, the decoder stack is made up of N identical layers.
+  Each layer is composed of the sublayers:
+    1. Self-attention layer
+    2. Multi-headed attention layer combining encoder outputs with results from
+       the previous self-attention layer.
+    3. Feedforward network (2 fully-connected layers)
+  """
+
+  def __init__(self, params):
+    super(TransformerDecoder, self).__init__()
+    self.params = params
+
+  def build(self, unused_input_shapes):
+    """Implements build() for the layer."""
+    self.decoder_layers = []
+    for i in range(self.params["num_hidden_layers"]):
+      self.decoder_layers.append(
+          transformer.TransformerDecoderLayer(
+              num_attention_heads=self.params["num_attention_heads"],
+              intermediate_size=self.params["intermediate_size"],
+              intermediate_activation="relu",
+              dropout_rate=self.params["relu_dropout"],
+              attention_dropout_rate=self.params["attention_dropout"],
+              name=("layer_%d" % i)))
+    super(TransformerDecoder, self).build(unused_input_shapes)
+
+  def get_config(self):
+    return {
+        "params": self.params,
+    }
+
+  def call(self,
+           decoder_inputs,
+           encoder_outputs,
+           decoder_self_attention_bias,
+           attention_bias,
+           # training,
+           cache=None,
+           decode_loop_step=None):
+    """Return the output of the decoder layer stacks.
+
+    Args:
+      decoder_inputs: A tensor with shape
+        [batch_size, target_length, hidden_size].
+      encoder_outputs: A tensor with shape
+        [batch_size, input_length, hidden_size]
+      decoder_self_attention_bias: A tensor with shape
+        [1, 1, target_len, target_length], the bias for decoder self-attention
+        layer.
+      attention_bias: A tensor with shape [batch_size, 1, 1, input_length],
+        the bias for encoder-decoder attention layer.
+      training: A bool, whether in training mode or not.
+      cache: (Used for fast decoding) A nested dictionary storing previous
+        decoder self-attention values. The items are:
+          {layer_n: {"k": A tensor with shape [batch_size, i, key_channels],
+                     "v": A tensor with shape [batch_size, i, value_channels]},
+                       ...}
+      decode_loop_step: An integer, the step number of the decoding loop. Used
+        only for autoregressive inference on TPU.
+
+    Returns:
+      Output of decoder layer stack.
+      float32 tensor with shape [batch_size, target_length, hidden_size]
+    """
+    output_tensor = decoder_inputs
+    self_attention_mask = decoder_self_attention_bias
+    attention_mask = attention_bias
+    for layer_idx in range(self.params["num_hidden_layers"]):
+      if self.attend_to_last_layer:
+        memory = encoder_outputs[-1]
+      else:
+        memory = encoder_outputs[layer_idx]
+      transformer_inputs = [
+          output_tensor, memory, attention_mask, self_attention_mask
+      ]
+      # Gets the cache for decoding.
+      if cache is None:
+        output_tensor, _ = self.decoder_layers[layer_idx](transformer_inputs)
+      else:
+        cache_layer_idx = str(layer_idx)
+        output_tensor, cache[cache_layer_idx] = self.decoder_layers[layer_idx](
+            transformer_inputs,
+            cache=cache[cache_layer_idx],
+            decode_loop_step=decode_loop_step)
+    return output_tensor

@@ -32,6 +32,7 @@ BASE_PARAMS = defaultdict(
     num_hidden_layers=6,  # Number of layers in the encoder and decoder stacks.
     num_heads=8,  # Number of heads to use in multi-headed attention.
     filter_size=2048,  # Inner layer dimension in the feedforward network.
+    intermediate_size=4096,
 
     # Dropout values (only used when training)
     layer_postprocess_dropout=0.1,
