@@ -692,10 +692,14 @@ class TransformerDecoder(tf.keras.layers.Layer):
       float32 tensor with shape [batch_size, target_length, hidden_size]
     """
     output_tensor = decoder_inputs
+    print ('decoder_inputs', decoder_inputs)
+    tf.print('decoder_inputs', decoder_inputs)
     self_attention_mask = decoder_self_attention_bias
     attention_mask = attention_bias
     for layer_idx in range(self.params["num_hidden_layers"]):
+      print ('encoder_outputs', encoder_outputs)
       memory = encoder_outputs[-1]
+      print ('memory', memory)
       transformer_inputs = [
           output_tensor, memory, attention_mask, self_attention_mask
       ]
