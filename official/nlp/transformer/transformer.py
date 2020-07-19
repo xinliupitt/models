@@ -371,7 +371,7 @@ class Transformer(tf.keras.Model):
     num_heads = self.params["num_heads"]
     dim_per_head = self.params["hidden_size"] // num_heads
     cache = {
-        layer: {
+        str(layer): {
             "key":
                 tf.zeros([
                     batch_size, init_decode_length, num_heads, dim_per_head
