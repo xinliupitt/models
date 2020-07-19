@@ -96,9 +96,9 @@ class Transformer(tf.keras.Model):
 
   def build(self, unused_input_shapes):
     """Implements build() for the layer."""
-    self.layers = []
+    self.decoder_layers = []
     for i in range(self.params["num_hidden_layers"]):
-      self.layers.append(
+      self.decoder_layers.append(
           transformer.TransformerDecoderLayer(
               num_attention_heads=self.params["num_attention_heads"],
               intermediate_size=self.params["intermediate_size"],
@@ -281,10 +281,10 @@ class Transformer(tf.keras.Model):
         ]
         # Gets the cache for decoding.
         if cache is None:
-          output_tensor, _ = self.layers[layer_idx](transformer_inputs)
+          output_tensor, _ = self.decoder_layers[layer_idx](transformer_inputs)
         else:
           cache_layer_idx = str(layer_idx)
-          output_tensor, cache[cache_layer_idx] = self.layers[layer_idx](
+          output_tensor, cache[cache_layer_idx] = self.decoder_layers[layer_idx](
               transformer_inputs,
               cache=cache[cache_layer_idx],
               decode_loop_step=decode_loop_step)
@@ -369,10 +369,10 @@ class Transformer(tf.keras.Model):
         ]
         # Gets the cache for decoding.
         if cache is None:
-          output_tensor, _ = self.layers[layer_idx](transformer_inputs)
+          output_tensor, _ = self.decoder_layers[layer_idx](transformer_inputs)
         else:
           cache_layer_idx = str(layer_idx)
-          output_tensor, cache[cache_layer_idx] = self.layers[layer_idx](
+          output_tensor, cache[cache_layer_idx] = self.decoder_layers[layer_idx](
               transformer_inputs,
               cache=cache[cache_layer_idx],
               decode_loop_step=decode_loop_step)
