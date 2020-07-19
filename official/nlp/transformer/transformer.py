@@ -691,6 +691,9 @@ class TransformerDecoder(tf.keras.layers.Layer):
       Output of decoder layer stack.
       float32 tensor with shape [batch_size, target_length, hidden_size]
     """
+    if not isinstance(encoder_outputs, list):
+      encoder_outputs = [encoder_outputs]
+
     output_tensor = decoder_inputs
     print ('decoder_inputs', decoder_inputs)
     tf.print('decoder_inputs', decoder_inputs)
