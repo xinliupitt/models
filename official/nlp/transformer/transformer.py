@@ -243,7 +243,8 @@ class Transformer(tf.keras.Model):
 
       attention_bias = self._bias_convert(attention_bias)
       attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
-
+      print ('decode attention_mask', attention_mask)
+      tf.print('decode attention_mask', attention_mask)
       decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
           length, dtype=self.params["dtype"])
       decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
