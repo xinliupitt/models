@@ -694,10 +694,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
     self_attention_mask = decoder_self_attention_bias
     attention_mask = attention_bias
     for layer_idx in range(self.params["num_hidden_layers"]):
-      if self.attend_to_last_layer:
-        memory = encoder_outputs[-1]
-      else:
-        memory = encoder_outputs[layer_idx]
+      memory = encoder_outputs[-1]
       transformer_inputs = [
           output_tensor, memory, attention_mask, self_attention_mask
       ]
