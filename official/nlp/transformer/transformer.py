@@ -649,6 +649,8 @@ class TransformerDecoder(tf.keras.layers.Layer):
               dropout_rate=self.params["relu_dropout"],
               attention_dropout_rate=self.params["attention_dropout"],
               name=("layer_%d" % i)))
+    self.output_normalization = tf.keras.layers.LayerNormalization(
+        epsilon=1e-6, dtype="float32")
     super(TransformerDecoder, self).build(unused_input_shapes)
 
   def get_config(self):
@@ -709,4 +711,5 @@ class TransformerDecoder(tf.keras.layers.Layer):
             transformer_inputs,
             cache=cache[cache_layer_idx],
             decode_loop_step=decode_loop_step)
-    return output_tensor
+    return self.output_normalization(output_tensor)
+    # return output_tensor
