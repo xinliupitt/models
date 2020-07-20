@@ -711,5 +711,5 @@ class TransformerDecoder(tf.keras.layers.Layer):
             transformer_inputs,
             cache=cache[cache_layer_idx],
             decode_loop_step=decode_loop_step)
-    return self.output_normalization(output_tensor)
-    # return output_tensor
+    # return self.output_normalization(output_tensor)
+    return output_tensor

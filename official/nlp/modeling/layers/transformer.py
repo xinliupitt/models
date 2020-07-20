@@ -328,7 +328,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         rate=self.dropout_rate)
     self.self_attention_layer_norm = (
         tf.keras.layers.LayerNormalization(
-            name="self_attention_layer_norm", axis=-1, epsilon=1e-12))
+            name="self_attention_layer_norm", axis=-1, epsilon=1e-6))
     # Encoder-decoder attention.
     self.encdec_attention = self._cross_attention_cls(
         num_heads=self.num_attention_heads,
@@ -342,7 +342,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         rate=self.dropout_rate)
     self.encdec_attention_layer_norm = (
         tf.keras.layers.LayerNormalization(
-            name="attention/encdec_output_layer_norm", axis=-1, epsilon=1e-12))
+            name="attention/encdec_output_layer_norm", axis=-1, epsilon=1e-6))
 
     # Feed-forward projection.
     self.intermediate_dense = tf.keras.layers.experimental.EinsumDense(
@@ -361,7 +361,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         **common_kwargs)
     self.output_dropout = tf.keras.layers.Dropout(rate=self.dropout_rate)
     self.output_layer_norm = tf.keras.layers.LayerNormalization(
-        name="output_layer_norm", axis=-1, epsilon=1e-12)
+        name="output_layer_norm", axis=-1, epsilon=1e-6)
     super(TransformerDecoderLayer, self).build(input_shape)
 
   def common_layers_with_encoder(self):
