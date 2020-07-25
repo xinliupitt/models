@@ -252,6 +252,15 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     return dict(list(base_config.items()) + list(config.items()))
 
   def build(self, input_shape):
+    target_tensor_temp = tf.TensorShape(input_shape[0])
+    hidden_size = target_tensor_temp[2]
+    def _glorot_initializer(fan_in, fan_out):
+      limit = math.sqrt(6.0 / (fan_in + fan_out))
+      return tf.keras.initializers.RandomUniform(minval=-limit, maxval=limit)
+
+    attention_initializer = _glorot_initializer(input_shape[0].as_list()[-1],
+                                                hidden_size)
+    output_initializer = _glorot_initializer(hidden_size, hidden_size)
     inputs_len = len(input_shape)
     if inputs_len > 3 or inputs_len < 2:
       raise ValueError(
@@ -264,7 +273,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     key_shape = tensor_shapes[2] if inputs_len == 3 else value_shape
 
     common_kwargs = dict(
-        kernel_initializer=self._kernel_initializer,
+        # kernel_initializer=self._kernel_initializer,
         bias_initializer=self._bias_initializer,
         kernel_regularizer=self._kernel_regularizer,
         bias_regularizer=self._bias_regularizer,
@@ -281,6 +290,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                                        [self._num_heads, self._key_size]),
         bias_axes=bias_axes if self._use_bias else None,
         name="query",
+        kernel_initializer=attention_initializer,
         **common_kwargs)
     einsum_equation, bias_axes, output_rank = _build_proj_equation(
         key_shape.rank - 1, bound_dims=1, output_dims=2)
@@ -290,6 +300,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                                        [self._num_heads, self._key_size]),
         bias_axes=bias_axes if self._use_bias else None,
         name="key",
+        kernel_initializer=attention_initializer,
         **common_kwargs)
     einsum_equation, bias_axes, output_rank = _build_proj_equation(
         value_shape.rank - 1, bound_dims=1, output_dims=2)
@@ -299,6 +310,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                                        [self._num_heads, self._value_size]),
         bias_axes=bias_axes if self._use_bias else None,
         name="value",
+        kernel_initializer=attention_initializer,
         **common_kwargs)
 
     # Builds the attention computations for multi-head dot product attention.
@@ -319,6 +331,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         output_shape=_get_output_shape(output_rank - 1, output_shape),
         bias_axes=bias_axes if self._use_bias else None,
         name="attention_output",
+        kernel_initializer=output_initializer,
         **common_kwargs)
     super(MultiHeadAttention, self).build(input_shape)
 
@@ -426,6 +439,26 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     value = inputs[1]
     key = inputs[2] if inputs_len == 3 else value
 
+    # query = tf.constant([[[ 0.92205423, -1.7027702 ,  0.10144171,  0.5888346 ,
+    #      -0.9934138 , -1.0134778 ,  1.5420012 , -0.24863759,
+    #      -0.4475361 , -0.8528931 ,  1.438071  ,  0.66632557]],
+    #
+    #    [[ 0.92205423, -1.7027702 ,  0.10144171,  0.5888346 ,
+    #      -0.9934138 , -1.0134778 ,  1.5420012 , -0.24863759,
+    #      -0.4475361 , -0.8528931 ,  1.438071  ,  0.66632557]],
+    #
+    #    [[ 0.92205423, -1.7027702 ,  0.10144171,  0.5888346 ,
+    #      -0.9934138 , -1.0134778 ,  1.5420012 , -0.24863759,
+    #      -0.4475361 , -0.8528931 ,  1.438071  ,  0.66632557]],
+    #
+    #    [[ 0.92205423, -1.7027702 ,  0.10144171,  0.5888346 ,
+    #      -0.9934138 , -1.0134778 ,  1.5420012 , -0.24863759,
+    #      -0.4475361 , -0.8528931 ,  1.438071  ,  0.66632557]]])
+
+    # print ('query', query)
+    # print ('value', value)
+    # print ('key', key)
+
     #   N = `num_attention_heads`
     #   H = `size_per_head`
     # `query_tensor` = [B, T, N ,H]
@@ -488,6 +521,27 @@ class CachedAttention(MultiHeadAttention):
     from_tensor = inputs[0]
     to_tensor = inputs[1]
 
+    # tensor_temp = tf.constant([[[-0.999998, -0.999998, -0.999998, -0.999998, -0.999998,
+    #      -0.999998,  0.999998,  0.999998,  0.999998,  0.999998,
+    #       0.999998,  0.999998]],
+    #
+    #    [[-0.999998, -0.999998, -0.999998, -0.999998, -0.999998,
+    #      -0.999998,  0.999998,  0.999998,  0.999998,  0.999998,
+    #       0.999998,  0.999998]],
+    #
+    #    [[-0.999998, -0.999998, -0.999998, -0.999998, -0.999998,
+    #      -0.999998,  0.999998,  0.999998,  0.999998,  0.999998,
+    #       0.999998,  0.999998]],
+    #
+    #    [[-0.999998, -0.999998, -0.999998, -0.999998, -0.999998,
+    #      -0.999998,  0.999998,  0.999998,  0.999998,  0.999998,
+    #       0.999998,  0.999998]]])
+    # from_tensor = tensor_temp
+    # to_tensor = tensor_temp
+
+    # print ('from_tensor', from_tensor)
+    # print ('to_tensor', to_tensor)
+
     # Scalar dimensions referenced here:
     #   B = batch size (number of sequences)
     #   F = `from_tensor` sequence length
@@ -496,13 +550,13 @@ class CachedAttention(MultiHeadAttention):
     #   H = `size_per_head`
     # `query_tensor` = [B, F, N ,H]
     query_tensor = self._query_dense(from_tensor)
-
+    # print ('query_tensor', query_tensor)
     # `key_tensor` = [B, T, N, H]
     key_tensor = self._key_dense(to_tensor)
-
+    # print ('key_tensor', key_tensor)
     # `value_tensor` = [B, T, N, H]
     value_tensor = self._value_dense(to_tensor)
-
+    # print ('value_tensor', value_tensor)
     if cache:
       key_tensor, value_tensor = self._update_cache(key_tensor, value_tensor,
                                                     cache, decode_loop_step)
@@ -511,13 +565,16 @@ class CachedAttention(MultiHeadAttention):
     # attention scores.
     attention_scores = tf.einsum(self._dot_product_equation, key_tensor,
                                  query_tensor)
+    # print ('before multiply attention_scores', attention_scores)
     attention_scores = tf.multiply(attention_scores,
                                    1.0 / math.sqrt(float(self._key_size)))
 
     # Normalize the attention scores to probabilities.
     # `attention_scores` = [B, N, F, T]
+    # print ('after multiply attention_scores', attention_scores)
+    # print ('before _masked_softmax attention_mask', attention_mask)
     attention_scores = self._masked_softmax(attention_scores, attention_mask)
-
+    # print ('after _masked_softmax attention_scores', attention_scores)
     # This is actually dropping out entire tokens to attend to, which might
     # seem a bit unusual, but is taken from the original Transformer paper.
     attention_scores = self._dropout_layer(attention_scores)
@@ -525,6 +582,7 @@ class CachedAttention(MultiHeadAttention):
     attention_output = tf.einsum(self._combine_equation, attention_scores,
                                  value_tensor)
     attention_output = self._output_dense(attention_output)
+    # print ('attention_output', attention_output)
     if self._return_attention_scores:
       return attention_output, attention_scores, cache
     return attention_output, cache

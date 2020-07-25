@@ -399,12 +399,13 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         attention_mask=self_attention_mask,
         cache=cache,
         decode_loop_step=decode_loop_step)
+
     self_attention_output = self.self_attention_dropout(self_attention_output)
     self_attention_output = input_tensor_origin + self_attention_output
     # self_attention_output = self.self_attention_layer_norm(
     #     input_tensor + self_attention_output)
-
     # print ('new self_attention_output', self_attention_output)
+
     self_attention_output_origin = self_attention_output
     self_attention_output = self.encdec_attention_layer_norm(self_attention_output)
     # memory = self.encdec_attention_layer_norm(memory)
@@ -413,6 +414,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
       # Accesses the 5-th input tensor for the doc-attention probabilities.
       cross_attn_inputs.append(inputs[-1])
     attention_output = self.encdec_attention(cross_attn_inputs, attention_mask)
+
     attention_output = self.encdec_attention_dropout(attention_output)
     attention_output = self_attention_output_origin + attention_output
     # attention_output = self.encdec_attention_layer_norm(self_attention_output +
@@ -424,6 +426,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     intermediate_output = self.intermediate_activation_layer(
         intermediate_output)
     layer_output = self.output_dense(intermediate_output)
+
     layer_output = self.output_dropout(layer_output)
     layer_output = attention_output_origin + layer_output
     # layer_output = self.output_layer_norm(layer_output + attention_output)
