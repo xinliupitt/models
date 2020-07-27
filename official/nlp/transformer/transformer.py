@@ -21,8 +21,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
+
 import tensorflow as tf
 from official.modeling import tf_utils
+from official.nlp.modeling import layers
 from official.nlp.modeling.layers import position_embedding
 from official.nlp.modeling.layers import transformer
 from official.nlp.modeling.ops import beam_search
@@ -89,8 +92,9 @@ class Transformer(tf.keras.Model):
     self.params = params
     self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
         params["vocab_size"], params["hidden_size"])
-    self.encoder_stack = EncoderStack(params)
-    self.decoder_stack = DecoderStack(params)
+    # self.encoder_stack = EncoderStack(params)
+    self.encoder_layer = TransformerEncoder(params)
+    # self.decoder_stack = DecoderStack(params)
     self.decoder_layer = TransformerDecoder(params)
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
@@ -188,6 +192,8 @@ class Transformer(tf.keras.Model):
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
       inputs_padding = model_utils.get_padding(inputs)
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
+      attention_mask = tf.cast(tf.not_equal(inputs, 0), self.params["dtype"])
+      attention_mask = layers.SelfAttentionMask()([embedded_inputs, attention_mask])
 
       with tf.name_scope("add_pos_encoding"):
         pos_encoding = self.position_embedding(inputs=embedded_inputs)
@@ -198,8 +204,9 @@ class Transformer(tf.keras.Model):
         encoder_inputs = tf.nn.dropout(
             encoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
-      return self.encoder_stack(
-          encoder_inputs, attention_bias, inputs_padding, training=training)
+      encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
+
+      return encoder_outputs
 
   def decode(self, targets, encoder_outputs, attention_bias, training):
     """Generate logits for each value in the target sequence.
@@ -517,6 +524,80 @@ class EncoderStack(tf.keras.layers.Layer):
     return self.output_normalization(encoder_inputs)
 
 
+class TransformerEncoder(tf.keras.layers.Layer):
+  """Transformer decoder stack.
+
+  Like the encoder stack, the decoder stack is made up of N identical layers.
+  Each layer is composed of the sublayers:
+    1. Self-attention layer
+    2. Multi-headed attention layer combining encoder outputs with results from
+       the previous self-attention layer.
+    3. Feedforward network (2 fully-connected layers)
+  """
+
+  def __init__(self, params):
+    super(TransformerEncoder, self).__init__()
+    self.params = params
+    self.count = 0
+
+  def build(self, unused_input_shapes):
+    """Implements build() for the layer."""
+    self.encoder_layers = []
+    for i in range(self.params["num_hidden_layers"]):
+      self.encoder_layers.append(
+          transformer.Transformer(
+              num_attention_heads=self.params["num_heads"],
+              intermediate_size=self.params["filter_size"],
+              intermediate_activation="relu",
+              dropout_rate=self.params["relu_dropout"],
+              attention_dropout_rate=self.params["attention_dropout"],
+              name=("layer_%d" % i)))
+    self.output_normalization = tf.keras.layers.LayerNormalization(
+        epsilon=1e-6, dtype="float32")
+    super(TransformerEncoder, self).build(unused_input_shapes)
+
+  def get_config(self):
+    return {
+        "params": self.params,
+    }
+
+  def call(self,
+           encoder_inputs,
+           attention_bias):
+    """Return the output of the decoder layer stacks.
+
+    Args:
+      decoder_inputs: A tensor with shape
+        [batch_size, target_length, hidden_size].
+      encoder_outputs: A tensor with shape
+        [batch_size, input_length, hidden_size]
+      decoder_self_attention_bias: A tensor with shape
+        [1, 1, target_len, target_length], the bias for decoder self-attention
+        layer.
+      attention_bias: A tensor with shape [batch_size, 1, 1, input_length],
+        the bias for encoder-decoder attention layer.
+      training: A bool, whether in training mode or not.
+      cache: (Used for fast decoding) A nested dictionary storing previous
+        decoder self-attention values. The items are:
+          {layer_n: {"k": A tensor with shape [batch_size, i, key_channels],
+                     "v": A tensor with shape [batch_size, i, value_channels]},
+                       ...}
+      decode_loop_step: An integer, the step number of the decoding loop. Used
+        only for autoregressive inference on TPU.
+
+    Returns:
+      Output of decoder layer stack.
+      float32 tensor with shape [batch_size, target_length, hidden_size]
+    """
+    for layer_idx in range(self.params["num_hidden_layers"]):
+      encoder_inputs = self.encoder_layers[layer_idx]([encoder_inputs, attention_bias])
+
+    output_tensor = encoder_inputs
+    output_tensor = self.output_normalization(output_tensor)
+
+    return output_tensor
+
+
 class DecoderStack(tf.keras.layers.Layer):
   """Transformer decoder stack.
 
@@ -644,7 +725,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
       self.decoder_layers.append(
           transformer.TransformerDecoderLayer(
               num_attention_heads=self.params["num_heads"],
-              intermediate_size=self.params["intermediate_size"],
+              intermediate_size=self.params["filter_size"],
               intermediate_activation="relu",
               dropout_rate=self.params["relu_dropout"],
               attention_dropout_rate=self.params["attention_dropout"],

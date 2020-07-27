@@ -119,6 +119,7 @@ class Transformer(tf.keras.layers.Layer):
         num_heads=self._num_heads,
         key_size=self._attention_head_size,
         dropout=self._attention_dropout_rate,
+        use_bias=False,
         name="self_attention",
         **common_kwargs)
     # pylint: disable=protected-access
@@ -132,7 +133,7 @@ class Transformer(tf.keras.layers.Layer):
         tf.keras.layers.LayerNormalization(
             name="self_attention_layer_norm",
             axis=-1,
-            epsilon=1e-12,
+            epsilon=1e-6,
             dtype=tf.float32))
     self._intermediate_dense = tf.keras.layers.experimental.EinsumDense(
         "abc,cd->abd",
@@ -157,7 +158,7 @@ class Transformer(tf.keras.layers.Layer):
     self._output_dropout = tf.keras.layers.Dropout(rate=self._dropout_rate)
     # Use float32 in layernorm for numeric stability.
     self._output_layer_norm = tf.keras.layers.LayerNormalization(
-        name="output_layer_norm", axis=-1, epsilon=1e-12, dtype=tf.float32)
+        name="output_layer_norm", axis=-1, epsilon=1e-6, dtype=tf.float32)
 
     super(Transformer, self).build(input_shape)
 
@@ -203,13 +204,23 @@ class Transformer(tf.keras.layers.Layer):
       target_tensor = input_tensor[:, 0:self._output_range, :]
       attention_mask = attention_mask[:, 0:self._output_range, :]
     else:
+      input_tensor_origin = input_tensor
+      input_tensor = self._attention_layer_norm(input_tensor)
       target_tensor = input_tensor
+
+
     attention_inputs = [target_tensor, input_tensor]
 
     attention_output = self._attention_layer(attention_inputs, attention_mask)
+    # print ('new attention_output', attention_output)
     attention_output = self._attention_dropout(attention_output)
-    attention_output = self._attention_layer_norm(target_tensor +
-                                                  attention_output)
+    attention_output = input_tensor_origin + attention_output
+    # attention_output = self._attention_layer_norm(target_tensor +
+    #                                               attention_output)
+
+    attention_inputs_origin = attention_output
+    attention_output = self._output_layer_norm(attention_output)
+
     intermediate_output = self._intermediate_dense(attention_output)
     intermediate_output = self._intermediate_activation_layer(
         intermediate_output)
@@ -219,7 +230,8 @@ class Transformer(tf.keras.layers.Layer):
     # is always fp32 for now. Cast layer_output to fp32 for the subsequent
     # add.
     layer_output = tf.cast(layer_output, tf.float32)
-    layer_output = self._output_layer_norm(layer_output + attention_output)
+    layer_output = attention_inputs_origin + layer_output
+    # layer_output = self._output_layer_norm(layer_output + attention_output)
 
     return layer_output
 
