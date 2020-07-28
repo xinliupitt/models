@@ -164,6 +164,8 @@ class Transformer(tf.keras.Model):
         return self.predict(encoder_outputs, attention_bias, training)
       else:
         logits = self.decode(targets, encoder_outputs, attention_bias, training)
+        print ('New?', workon_new)
+        print ('decoder output', logits)
         return logits
 
   def _bias_convert(self, bias):
