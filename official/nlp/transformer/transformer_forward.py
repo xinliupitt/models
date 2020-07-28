@@ -28,7 +28,7 @@ from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
 is_train = False
-get_weights_flag = False
+get_weights_flag = True
 
 def _count_params(layer, trainable_only=True):
   """Returns the count of all model parameters, or just trainable ones."""
@@ -95,11 +95,17 @@ class TransformerV2Test(tf.test.TestCase):
 
 
   if not is_train:
+    def test_a_get_weights_eval(self):
+      model = transformer.create_model(self.params, False)
+      w_eval = model.get_weights()
+      save('w_eval.npy', w_eval)
+      print ('model params', _count_params(model))
+
     def test_create_model_not_train(self):
       model = transformer.create_model(self.params, False)
       inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
-      w = load('w.npy', allow_pickle=True)
-      model.set_weights(w)
+      w_eval = load('w_eval.npy', allow_pickle=True)
+      model.set_weights(w_eval)
       model([inputs], training=False)
 
 
