@@ -95,11 +95,12 @@ class TransformerV2Test(tf.test.TestCase):
 
 
   if not is_train:
-    def test_a_get_weights_eval(self):
-      model = transformer.create_model(self.params, False)
-      w_eval = model.get_weights()
-      save('w_eval.npy', w_eval)
-      print ('model params', _count_params(model))
+    if get_weights_flag:
+      def test_a_get_weights_eval(self):
+        model = transformer.create_model(self.params, False)
+        w_eval = model.get_weights()
+        save('w_eval.npy', w_eval)
+        print ('model params', _count_params(model))
 
     def test_create_model_not_train(self):
       model = transformer.create_model(self.params, False)
