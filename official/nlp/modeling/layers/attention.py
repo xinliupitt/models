@@ -381,10 +381,12 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     """
     # Take the dot product between "query" and "key" to get the raw
     # attention scores.
+    query_tensor = tf.multiply(query_tensor,
+                                   1.0 / math.sqrt(float(self._key_size)))
     attention_scores = tf.einsum(self._dot_product_equation, key_tensor,
                                  query_tensor)
-    attention_scores = tf.multiply(attention_scores,
-                                   1.0 / math.sqrt(float(self._key_size)))
+    # attention_scores = tf.multiply(attention_scores,
+    #                                1.0 / math.sqrt(float(self._key_size)))
 
     # Normalize the attention scores to probabilities.
     # `attention_scores` = [B, N, T, S]
@@ -455,9 +457,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     #      -0.9934138 , -1.0134778 ,  1.5420012 , -0.24863759,
     #      -0.4475361 , -0.8528931 ,  1.438071  ,  0.66632557]]])
 
-    # print ('query', query)
-    # print ('value', value)
-    # print ('key', key)
+    # print ('new query', query)
+    # print ('new value', value)
 
     #   N = `num_attention_heads`
     #   H = `size_per_head`
