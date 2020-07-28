@@ -220,8 +220,9 @@ class Transformer(tf.keras.Model):
         encoder_inputs = embedded_inputs + pos_encoding
 
       if training:
-        encoder_inputs = tf.nn.dropout(
-            encoder_inputs, rate=self.params["layer_postprocess_dropout"])
+        pass
+        # encoder_inputs = tf.nn.dropout(
+        #     encoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
       if not workon_new:
         encoder_outputs = self.encoder_stack(
