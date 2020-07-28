@@ -19,6 +19,8 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
+from numpy import load
+from numpy import save
 
 import tensorflow as tf
 
@@ -37,21 +39,21 @@ def _count_params(layer, trainable_only=True):
             tf.keras.backend.count_params(p) for p in layer.trainable_weights
         ]))
 
-def _count_params_model(model_name):
-  total_parameters = 0
-  for variable in model_name.trainable_variables:
-      # shape is an array of tf.Dimension
-      shape = variable.get_shape()
-      # print(shape)
-      # print(len(shape))
-      variable_parameters = 1
-      for dim in shape:
-          # print(dim)
-          variable_parameters *= dim
-      # print(variable_parameters)
-      total_parameters += variable_parameters
-  print(total_parameters)
-  return total_parameters
+# def _count_params_model(model_name):
+#   total_parameters = 0
+#   for variable in model_name.trainable_variables:
+#       # shape is an array of tf.Dimension
+#       shape = variable.get_shape()
+#       # print(shape)
+#       # print(len(shape))
+#       variable_parameters = 1
+#       for dim in shape:
+#           # print(dim)
+#           variable_parameters *= dim
+#       # print(variable_parameters)
+#       total_parameters += variable_parameters
+#   print(total_parameters)
+#   return total_parameters
 
 class TransformerV2Test(tf.test.TestCase):
 
@@ -69,17 +71,24 @@ class TransformerV2Test(tf.test.TestCase):
     params["dtype"] = tf.float32
 
   if is_train:
+    def test_a_get_weights(self):
+      model = transformer.create_model(self.params, True)
+      w = model.get_weights()
+      save('w.npy', w)
+
     def test_create_model_train(self):
       model = transformer.create_model(self.params, True)
       inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
       targets = np.asarray([[4, 3, 0], [13, 19, 17], [20, 14, 1], [5, 7, 0]])
+      w = load('w.npy', allow_pickle=True)
+      model.set_weights(w)
       model([inputs, targets], training=True)
       # print ("new params count", self._count_params(model))
-      w = model.get_weights()
+
       # print ('w[0]', w[0])
       # print ('weight count', len(w))
       # print ("new params count", len(model.trainable_variables))
-      print ('model params', _count_params_model(model))
+      # print ('model params', _count_params_model(model))
       print ('model params', _count_params(model))
 
 

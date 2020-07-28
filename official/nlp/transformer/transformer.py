@@ -21,6 +21,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+workon_new = True
+
 import numpy as np
 
 import tensorflow as tf
@@ -93,9 +95,9 @@ class Transformer(tf.keras.Model):
     self.params = params
     self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
         params["vocab_size"], params["hidden_size"])
-    # self.encoder_stack = EncoderStack(params)
+    self.encoder_stack = EncoderStack(params)
     self.encoder_layer = TransformerEncoder(params)
-    # self.decoder_stack = DecoderStack(params)
+    self.decoder_stack = DecoderStack(params)
     self.decoder_layer = TransformerDecoder(params)
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
@@ -254,35 +256,33 @@ class Transformer(tf.keras.Model):
         decoder_inputs = tf.nn.dropout(
             decoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
-      cache = None
-      decode_loop_step = None
 
-      decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
-      batch_size = decoder_shape[0]
-      decoder_length = decoder_shape[1]
+      if not workon_new:
+        decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
+            length, dtype=self.params["dtype"])
+        outputs = self.decoder_stack(
+            decoder_inputs,
+            encoder_outputs,
+            decoder_self_attention_bias,
+            attention_bias,
+            training=False)
+      else:
+        decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
+        batch_size = decoder_shape[0]
+        decoder_length = decoder_shape[1]
 
-      attention_bias = self._bias_convert(attention_bias)
-      attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
-      decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
-          length, dtype=self.params["dtype"])
-      decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
-      self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
+        attention_bias = self._bias_convert(attention_bias)
+        attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+        decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
+            length, dtype=self.params["dtype"])
+        decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
+        self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
 
-
-
-      # outputs = self.decoder_stack(
-      #     decoder_inputs,
-      #     encoder_outputs,
-      #     decoder_self_attention_bias,
-      #     attention_bias,
-      #     training=training)
-      output_tensor = decoder_inputs
-
-      outputs = self.decoder_layer(
-          decoder_inputs,
-          encoder_outputs,
-          self_attention_mask,
-          attention_mask)
+        outputs = self.decoder_layer(
+            decoder_inputs,
+            encoder_outputs,
+            self_attention_mask,
+            attention_mask)
 
       print ("new decoder params count", self._count_params(self.decoder_layer))
 
