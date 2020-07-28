@@ -118,8 +118,8 @@ class Attention(tf.keras.layers.Layer):
     key = self.key_dense_layer(source_input)
     value = self.value_dense_layer(source_input)
 
-    print ('old query_input', query_input)
-    print ('old source_input', source_input)
+    # print ('old query_input', query_input)
+    # print ('old source_input', source_input)
 
     if cache is not None:
       # Combine cached keys and values with new keys and values.

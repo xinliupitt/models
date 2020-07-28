@@ -457,8 +457,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     #      -0.9934138 , -1.0134778 ,  1.5420012 , -0.24863759,
     #      -0.4475361 , -0.8528931 ,  1.438071  ,  0.66632557]]])
 
-    print ('new query', query)
-    print ('new value', value)
+    # print ('new query', query)
+    # print ('new value', value)
 
     #   N = `num_attention_heads`
     #   H = `size_per_head`
