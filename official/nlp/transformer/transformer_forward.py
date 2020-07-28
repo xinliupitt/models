@@ -58,9 +58,11 @@ class TransformerV2Test(tf.test.TestCase):
       inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
       targets = np.asarray([[4, 3, 0], [13, 19, 17], [20, 14, 1], [5, 7, 0]])
       model([inputs, targets], training=True)
-      print ("new params count", self._count_params(model))
+      # print ("new params count", self._count_params(model))
       w = model.get_weights()
-      print ('weights', w[0])
+      print ('w[0]', w[0])
+      print ('weight count', len(w))
+      print ("new params count", len(model.trainable_variables))
 
   if not is_train:
     def test_create_model_not_train(self):
