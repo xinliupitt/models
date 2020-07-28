@@ -217,9 +217,12 @@ class Transformer(tf.keras.Model):
         encoder_inputs = tf.nn.dropout(
             encoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
-      encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
-
-      print ("new encoder params count", self._count_params(self.encoder_layer))
+      if not workon_new:
+        encoder_outputs = self.encoder_stack(
+          encoder_inputs, attention_bias, inputs_padding, training=False)
+      else:
+        encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
+        print ("new encoder params count", self._count_params(self.encoder_layer))
 
       return encoder_outputs
 
