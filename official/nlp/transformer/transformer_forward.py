@@ -65,7 +65,7 @@ class TransformerV2Test(tf.test.TestCase):
       print ("new params count", len(model.trainable_variables))
 
       total_parameters = 0
-      for variable in model.trainable_variables():
+      for variable in model.trainable_variables:
           # shape is an array of tf.Dimension
           shape = variable.get_shape()
           print(shape)
