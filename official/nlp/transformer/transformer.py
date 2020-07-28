@@ -262,13 +262,16 @@ class Transformer(tf.keras.Model):
         pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
         decoder_inputs += pos_encoding
       if training:
-        decoder_inputs = tf.nn.dropout(
-            decoder_inputs, rate=self.params["layer_postprocess_dropout"])
+        pass
+        # decoder_inputs = tf.nn.dropout(
+        #     decoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
 
       if not workon_new:
         decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
             length, dtype=self.params["dtype"])
+        print ('old decoder_inputs', decoder_inputs)
+        print ('old encoder_outputs', encoder_outputs)
         outputs = self.decoder_stack(
             decoder_inputs,
             encoder_outputs,
@@ -286,7 +289,8 @@ class Transformer(tf.keras.Model):
             length, dtype=self.params["dtype"])
         decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
         self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
-
+        print ('new decoder_inputs', decoder_inputs)
+        print ('new encoder_outputs', encoder_outputs)
         outputs = self.decoder_layer(
             decoder_inputs,
             encoder_outputs,
