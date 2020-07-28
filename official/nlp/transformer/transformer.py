@@ -89,6 +89,7 @@ class Transformer(tf.keras.Model):
       name: name of the model.
     """
     super(Transformer, self).__init__(name=name)
+    tf.random.set_seed(1234)
     self.params = params
     self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
         params["vocab_size"], params["hidden_size"])
