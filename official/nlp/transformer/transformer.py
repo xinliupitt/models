@@ -157,15 +157,15 @@ class Transformer(tf.keras.Model):
       # Generate output sequence if targets is None, or return logits if target
       # sequence is known.
 
-      print ('New?', workon_new)
-      print ('encoder_outputs', encoder_outputs)
+      # print ('New?', workon_new)
+      # print ('encoder_outputs', encoder_outputs)
 
       if targets is None:
         return self.predict(encoder_outputs, attention_bias, training)
       else:
         logits = self.decode(targets, encoder_outputs, attention_bias, training)
-        print ('New?', workon_new)
-        print ('decoder output', logits)
+        # print ('New?', workon_new)
+        # print ('decoder output', logits)
         return logits
 
   def _bias_convert(self, bias):
@@ -714,6 +714,7 @@ class DecoderStack(tf.keras.layers.Layer):
               training=training,
               cache=layer_cache,
               decode_loop_step=decode_loop_step)
+          print ('old self_attention output', decoder_inputs)
         with tf.name_scope("encdec_attention"):
           decoder_inputs = enc_dec_attention_layer(
               decoder_inputs,

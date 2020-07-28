@@ -416,7 +416,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     self_attention_output = input_tensor_origin + self_attention_output
     # self_attention_output = self.self_attention_layer_norm(
     #     input_tensor + self_attention_output)
-    # print ('new self_attention_output', self_attention_output)
+    print ('new self_attention_output', self_attention_output)
 
     self_attention_output_origin = self_attention_output
     self_attention_output = self.encdec_attention_layer_norm(self_attention_output)
