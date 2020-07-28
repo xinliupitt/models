@@ -63,10 +63,20 @@ class TransformerV2Test(tf.test.TestCase):
       # print ('w[0]', w[0])
       print ('weight count', len(w))
       print ("new params count", len(model.trainable_variables))
-      count = 0
-      for sub_w in w:
-        count += len(sub_w)
-      print ('deep count', count)
+
+      total_parameters = 0
+      for variable in model.trainable_variables():
+          # shape is an array of tf.Dimension
+          shape = variable.get_shape()
+          print(shape)
+          print(len(shape))
+          variable_parameters = 1
+          for dim in shape:
+              print(dim)
+              variable_parameters *= dim.value
+          print(variable_parameters)
+          total_parameters += variable_parameters
+      print(total_parameters)
 
   if not is_train:
     def test_create_model_not_train(self):
