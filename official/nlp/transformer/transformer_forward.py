@@ -27,7 +27,7 @@ from official.nlp.transformer import transformer
 
 is_train = True
 
-def _count_params(self, layer, trainable_only=True):
+def _count_params(layer, trainable_only=True):
   """Returns the count of all model parameters, or just trainable ones."""
   if not trainable_only:
     return layer.count_params()
@@ -36,6 +36,22 @@ def _count_params(self, layer, trainable_only=True):
         np.sum([
             tf.keras.backend.count_params(p) for p in layer.trainable_weights
         ]))
+
+def _count_params_model(model_name):
+  total_parameters = 0
+  for variable in model_name.trainable_variables:
+      # shape is an array of tf.Dimension
+      shape = variable.get_shape()
+      # print(shape)
+      # print(len(shape))
+      variable_parameters = 1
+      for dim in shape:
+          # print(dim)
+          variable_parameters *= dim
+      # print(variable_parameters)
+      total_parameters += variable_parameters
+  print(total_parameters)
+  return total_parameters
 
 class TransformerV2Test(tf.test.TestCase):
 
@@ -61,22 +77,11 @@ class TransformerV2Test(tf.test.TestCase):
       # print ("new params count", self._count_params(model))
       w = model.get_weights()
       # print ('w[0]', w[0])
-      print ('weight count', len(w))
-      print ("new params count", len(model.trainable_variables))
+      # print ('weight count', len(w))
+      # print ("new params count", len(model.trainable_variables))
+      print ('model params', _count_params_model(model))
+      print ('model params', _count_params(model))
 
-      total_parameters = 0
-      for variable in model.trainable_variables:
-          # shape is an array of tf.Dimension
-          shape = variable.get_shape()
-          print(shape)
-          print(len(shape))
-          variable_parameters = 1
-          for dim in shape:
-              print(dim)
-              variable_parameters *= dim
-          print(variable_parameters)
-          total_parameters += variable_parameters
-      print(total_parameters)
 
   if not is_train:
     def test_create_model_not_train(self):
