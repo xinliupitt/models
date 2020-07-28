@@ -63,7 +63,7 @@ class TransformerV2Test(tf.test.TestCase):
     params["batch_size"] = params["default_batch_size"] = 16
     params["use_synthetic_data"] = True
     params["hidden_size"] = 12
-    params["num_hidden_layers"] = 1
+    params["num_hidden_layers"] = 2
     params["filter_size"] = 14
     params["num_heads"] = 2
     params["vocab_size"] = 41

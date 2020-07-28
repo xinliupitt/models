@@ -459,6 +459,7 @@ class Transformer(tf.keras.Model):
     top_decoded_ids = decoded_ids[:, 0, 1:]
     top_scores = scores[:, 0]
     print ("New?", workon_new)
+    print ('decoded_ids', decoded_ids)
     print ('scores', scores)
 
     return {"outputs": top_decoded_ids, "scores": top_scores}
@@ -737,7 +738,7 @@ class DecoderStack(tf.keras.layers.Layer):
               training=training,
               cache=layer_cache,
               decode_loop_step=decode_loop_step)
-          print ('old self_attention output', decoder_inputs)
+          # print ('old self_attention output', decoder_inputs)
         with tf.name_scope("encdec_attention"):
           decoder_inputs = enc_dec_attention_layer(
               decoder_inputs,
