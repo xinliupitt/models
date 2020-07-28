@@ -164,8 +164,8 @@ class Transformer(tf.keras.Model):
         return self.predict(encoder_outputs, attention_bias, training)
       else:
         logits = self.decode(targets, encoder_outputs, attention_bias, training)
-        print ('New?', workon_new)
-        print ('decoder output', logits)
+        # print ('New?', workon_new)
+        # print ('decoder output', logits)
         return logits
 
   def _bias_convert(self, bias):
@@ -347,33 +347,32 @@ class Transformer(tf.keras.Model):
 
         self_attention_bias = decoder_self_attention_bias[:, :, i:i + 1, :i + 1]
 
-      decoder_shape = tf_utils.get_shape_list(decoder_input, expected_rank=3)
-      batch_size = decoder_shape[0]
-      decoder_length = decoder_shape[1]
+      if workon_new:
+        decoder_shape = tf_utils.get_shape_list(decoder_input, expected_rank=3)
+        batch_size = decoder_shape[0]
+        decoder_length = decoder_shape[1]
 
-      attention_bias = self._bias_convert(cache.get("encoder_decoder_attention_bias"))
-      attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+        attention_bias = self._bias_convert(cache.get("encoder_decoder_attention_bias"))
+        attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
 
-      self_attention_bias = self._bias_convert(self_attention_bias)
-      self_attention_mask = self._to_bert_self_attention_mask(self_attention_bias, batch_size)
-
-
-      # decoder_outputs = self.decoder_stack(
-      #     decoder_input,
-      #     cache.get("encoder_outputs"),
-      #     self_attention_bias,
-      #     cache.get("encoder_decoder_attention_bias"),
-      #     training=training,
-      #     cache=cache,
-      #     decode_loop_step=i if self.params["padded_decode"] else None)
-
-      decoder_outputs = self.decoder_layer(
-          decoder_input,
-          cache.get("encoder_outputs"),
-          self_attention_mask,
-          attention_mask,
-          cache=cache,
-          decode_loop_step=i if self.params["padded_decode"] else None)
+        self_attention_bias = self._bias_convert(self_attention_bias)
+        self_attention_mask = self._to_bert_self_attention_mask(self_attention_bias, batch_size)
+        decoder_outputs = self.decoder_layer(
+            decoder_input,
+            cache.get("encoder_outputs"),
+            self_attention_mask,
+            attention_mask,
+            cache=cache,
+            decode_loop_step=i if self.params["padded_decode"] else None)
+      else:
+        decoder_outputs = self.decoder_stack(
+            decoder_input,
+            cache.get("encoder_outputs"),
+            self_attention_bias,
+            cache.get("encoder_decoder_attention_bias"),
+            training=training,
+            cache=cache,
+            decode_loop_step=i if self.params["padded_decode"] else None)
 
       logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
       logits = tf.squeeze(logits, axis=[1])
@@ -406,20 +405,37 @@ class Transformer(tf.keras.Model):
         max_decode_length if self.params["padded_decode"] else 0)
     num_heads = self.params["num_heads"]
     dim_per_head = self.params["hidden_size"] // num_heads
-    cache = {
-        str(layer): {
-            "key":
-                tf.zeros([
-                    batch_size, init_decode_length, num_heads, dim_per_head
-                ],
-                         dtype=self.params["dtype"]),
-            "value":
-                tf.zeros([
-                    batch_size, init_decode_length, num_heads, dim_per_head
-                ],
-                         dtype=self.params["dtype"])
-        } for layer in range(self.params["num_hidden_layers"])
-    }
+    if workon_new:
+      cache = {
+          str(layer): {
+              "key":
+                  tf.zeros([
+                      batch_size, init_decode_length, num_heads, dim_per_head
+                  ],
+                           dtype=self.params["dtype"]),
+              "value":
+                  tf.zeros([
+                      batch_size, init_decode_length, num_heads, dim_per_head
+                  ],
+                           dtype=self.params["dtype"])
+          } for layer in range(self.params["num_hidden_layers"])
+      }
+    else:
+      cache = {
+          "layer_%d" % layer: {
+              "k":
+                  tf.zeros([
+                      batch_size, init_decode_length, num_heads, dim_per_head
+                  ],
+                           dtype=self.params["dtype"]),
+              "v":
+                  tf.zeros([
+                      batch_size, init_decode_length, num_heads, dim_per_head
+                  ],
+                           dtype=self.params["dtype"])
+          } for layer in range(self.params["num_hidden_layers"])
+      }
+
     # pylint: enable=g-complex-comprehension
 
     # Add encoder output and attention bias to the cache.

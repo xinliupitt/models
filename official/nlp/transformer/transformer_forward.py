@@ -27,7 +27,7 @@ import tensorflow as tf
 from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
-is_train = True
+is_train = False
 get_weights_flag = False
 
 def _count_params(layer, trainable_only=True):
@@ -98,6 +98,8 @@ class TransformerV2Test(tf.test.TestCase):
     def test_create_model_not_train(self):
       model = transformer.create_model(self.params, False)
       inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
+      w = load('w.npy', allow_pickle=True)
+      model.set_weights(w)
       model([inputs], training=False)
 
 
