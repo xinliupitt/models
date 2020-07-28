@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = True
+workon_new = False
 
 import numpy as np
 
@@ -156,6 +156,10 @@ class Transformer(tf.keras.Model):
       encoder_outputs = self.encode(inputs, attention_bias, training)
       # Generate output sequence if targets is None, or return logits if target
       # sequence is known.
+
+      print ('New?', workon_new)
+      print ('encoder_outputs', encoder_outputs)
+
       if targets is None:
         return self.predict(encoder_outputs, attention_bias, training)
       else:
@@ -222,7 +226,7 @@ class Transformer(tf.keras.Model):
           encoder_inputs, attention_bias, inputs_padding, training=False)
       else:
         encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
-        print ("new encoder params count", self._count_params(self.encoder_layer))
+      print ("new encoder params count", self._count_params(self.encoder_layer))
 
       return encoder_outputs
 
@@ -567,8 +571,8 @@ class TransformerEncoder(tf.keras.layers.Layer):
               num_attention_heads=self.params["num_heads"],
               intermediate_size=self.params["filter_size"],
               intermediate_activation="relu",
-              dropout_rate=self.params["relu_dropout"],
-              attention_dropout_rate=self.params["attention_dropout"],
+              dropout_rate=0.0,
+              attention_dropout_rate=0.0,
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=1e-6, dtype="float32")
@@ -745,8 +749,8 @@ class TransformerDecoder(tf.keras.layers.Layer):
               num_attention_heads=self.params["num_heads"],
               intermediate_size=self.params["filter_size"],
               intermediate_activation="relu",
-              dropout_rate=self.params["relu_dropout"],
-              attention_dropout_rate=self.params["attention_dropout"],
+              dropout_rate=0.0,
+              attention_dropout_rate=0.0,
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=1e-6, dtype="float32")
