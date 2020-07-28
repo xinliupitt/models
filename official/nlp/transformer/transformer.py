@@ -175,6 +175,16 @@ class Transformer(tf.keras.Model):
     matrix = tf.tile(matrix, [1, decoder_length, 1])
     return matrix
 
+  def _count_params(self, layer, trainable_only=True):
+    """Returns the count of all model parameters, or just trainable ones."""
+    if not trainable_only:
+      return layer.count_params()
+    else:
+      return int(
+          np.sum([
+              tf.keras.backend.count_params(p) for p in layer.trainable_weights
+          ]))
+
   def encode(self, inputs, attention_bias, training):
     """Generate continuous representation for inputs.
 
@@ -206,6 +216,8 @@ class Transformer(tf.keras.Model):
             encoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
       encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
+
+      print ("new encoder params count", self._count_params(self.encoder_layer))
 
       return encoder_outputs
 
@@ -271,6 +283,8 @@ class Transformer(tf.keras.Model):
           encoder_outputs,
           self_attention_mask,
           attention_mask)
+
+      print ("new decoder params count", self._count_params(self.decoder_layer))
 
       logits = self.embedding_softmax_layer(outputs, mode="linear")
       logits = tf.cast(logits, tf.float32)
