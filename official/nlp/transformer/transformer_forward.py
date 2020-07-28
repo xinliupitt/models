@@ -73,7 +73,7 @@ class TransformerV2Test(tf.test.TestCase):
           variable_parameters = 1
           for dim in shape:
               print(dim)
-              variable_parameters *= dim.value
+              variable_parameters *= dim
           print(variable_parameters)
           total_parameters += variable_parameters
       print(total_parameters)
