@@ -72,6 +72,7 @@ class FeedForwardNetwork(tf.keras.layers.Layer):
     output = self.filter_dense_layer(x)
     if training:
       output = tf.nn.dropout(output, rate=self.relu_dropout)
+    print ('ffn dropout')
     output = self.output_dense_layer(output)
 
     return output
