@@ -164,7 +164,8 @@ class Transformer(tf.keras.layers.Layer):
     self._output_dropout = tf.keras.layers.Dropout(rate=self._dropout_rate)
     # Use float32 in layernorm for numeric stability.
     self._output_layer_norm = tf.keras.layers.LayerNormalization(
-        name="output_layer_norm", axis=-1, epsilon=self._norm_epsilon, dtype=tf.float32)
+        name="output_layer_norm", axis=-1, epsilon=self._norm_epsilon,
+        dtype=tf.float32)
 
     super(Transformer, self).build(input_shape)
 
@@ -356,7 +357,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         rate=self.dropout_rate)
     self.self_attention_layer_norm = (
         tf.keras.layers.LayerNormalization(
-            name="self_attention_layer_norm", axis=-1, epsilon=self._norm_epsilon))
+            name="self_attention_layer_norm",
+            axis=-1, epsilon=self._norm_epsilon))
     # Encoder-decoder attention.
     self.encdec_attention = self._cross_attention_cls(
         num_heads=self.num_attention_heads,
@@ -371,7 +373,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         rate=self.dropout_rate)
     self.encdec_attention_layer_norm = (
         tf.keras.layers.LayerNormalization(
-            name="attention/encdec_output_layer_norm", axis=-1, epsilon=self._norm_epsilon))
+            name="attention/encdec_output_layer_norm",
+            axis=-1, epsilon=self._norm_epsilon))
 
     # Feed-forward projection.
     self.intermediate_dense = tf.keras.layers.experimental.EinsumDense(
@@ -428,7 +431,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
           input_tensor + self_attention_output)
     if self._norm_first:
       source_self_attention_output = self_attention_output
-      self_attention_output = self.encdec_attention_layer_norm(self_attention_output)
+      self_attention_output = self.encdec_attention_layer_norm(
+          self_attention_output)
     cross_attn_inputs = dict(
         query=self_attention_output,
         value=memory,
@@ -441,8 +445,9 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     if self._norm_first:
       attention_output = source_self_attention_output + attention_output
     else:
-      attention_output = self.encdec_attention_layer_norm(self_attention_output +
-                                                          attention_output)
+      attention_output = self.encdec_attention_layer_norm(
+          self_attention_output +
+          attention_output)
     if self._norm_first:
       source_attention_output = attention_output
       attention_output = self.output_layer_norm(attention_output)
