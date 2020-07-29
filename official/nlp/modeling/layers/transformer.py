@@ -149,7 +149,7 @@ class Transformer(tf.keras.layers.Layer):
       policy = tf.float32
     self._intermediate_activation_layer = tf.keras.layers.Activation(
         self._intermediate_activation, dtype=policy)
-    self.intermediate_dropout = tf.keras.layers.Dropout(rate=self.dropout_rate)
+    self.intermediate_dropout = tf.keras.layers.Dropout(rate=self._dropout_rate)
     self._output_dense = tf.keras.layers.experimental.EinsumDense(
         "abc,cd->abd",
         output_shape=(None, hidden_size),
