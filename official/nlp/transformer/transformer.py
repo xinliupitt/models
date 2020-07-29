@@ -498,6 +498,7 @@ class PrePostProcessingWrapper(tf.keras.layers.Layer):
     # Postprocessing: apply dropout and residual connection
     if training:
       y = tf.nn.dropout(y, rate=self.postprocess_dropout)
+    print ('post layer dropout')
     return x + y
 
 

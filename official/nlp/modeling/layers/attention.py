@@ -395,6 +395,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     # This is actually dropping out entire tokens to attend to, which might
     # seem a bit unusual, but is taken from the original Transformer paper.
     attention_scores_dropout = self._dropout_layer(attention_scores)
+    print ('multi-head attention dropout')
 
     # `context_layer` = [B, T, N, H]
     attention_output = tf.einsum(self._combine_equation,
@@ -581,6 +582,7 @@ class CachedAttention(MultiHeadAttention):
     # This is actually dropping out entire tokens to attend to, which might
     # seem a bit unusual, but is taken from the original Transformer paper.
     attention_scores = self._dropout_layer(attention_scores)
+    print ('cached attention dropout')
     # `context_layer` = [B, F, N, H]
     attention_output = tf.einsum(self._combine_equation, attention_scores,
                                  value_tensor)

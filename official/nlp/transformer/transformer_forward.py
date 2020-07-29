@@ -63,7 +63,7 @@ class TransformerV2Test(tf.test.TestCase):
     params["batch_size"] = params["default_batch_size"] = 16
     params["use_synthetic_data"] = True
     params["hidden_size"] = 12
-    params["num_hidden_layers"] = 3
+    params["num_hidden_layers"] = 1
     params["filter_size"] = 14
     params["num_heads"] = 2
     params["vocab_size"] = 41
@@ -84,6 +84,8 @@ class TransformerV2Test(tf.test.TestCase):
       targets = np.asarray([[4, 3, 0], [13, 19, 17], [20, 14, 1], [5, 7, 0]])
       w = load('w.npy', allow_pickle=True)
       model.set_weights(w)
+      print ('Model begins!')
+      print ('Model begins!')
       model([inputs, targets], training=True)
       # print ("new params count", self._count_params(model))
 

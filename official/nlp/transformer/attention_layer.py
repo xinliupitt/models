@@ -156,6 +156,7 @@ class Attention(tf.keras.layers.Layer):
     weights = tf.nn.softmax(logits, name="attention_weights")
     if training:
       weights = tf.nn.dropout(weights, rate=self.attention_dropout)
+    print ('attention dropout')
     attention_output = tf.einsum("BNFT,BTNH->BFNH", weights, value)
 
     # Run the outputs through another linear projection layer. Recombining heads

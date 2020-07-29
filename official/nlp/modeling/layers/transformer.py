@@ -214,6 +214,7 @@ class Transformer(tf.keras.layers.Layer):
     attention_output = self._attention_layer(attention_inputs, attention_mask)
     # print ('new attention_output', attention_output)
     attention_output = self._attention_dropout(attention_output)
+    print ('encoder attention dropout')
     attention_output = input_tensor_origin + attention_output
     # attention_output = self._attention_layer_norm(target_tensor +
     #                                               attention_output)
@@ -226,6 +227,7 @@ class Transformer(tf.keras.layers.Layer):
         intermediate_output)
     layer_output = self._output_dense(intermediate_output)
     layer_output = self._output_dropout(layer_output)
+    print ('encoder output dropout')
     # During mixed precision training, attention_output is from layer norm and
     # is always fp32 for now. Cast layer_output to fp32 for the subsequent
     # add.
@@ -413,6 +415,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         decode_loop_step=decode_loop_step)
 
     self_attention_output = self.self_attention_dropout(self_attention_output)
+    print ('decoder self attention dropout')
     self_attention_output = input_tensor_origin + self_attention_output
     # self_attention_output = self.self_attention_layer_norm(
     #     input_tensor + self_attention_output)
@@ -428,6 +431,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     attention_output = self.encdec_attention(cross_attn_inputs, attention_mask)
 
     attention_output = self.encdec_attention_dropout(attention_output)
+    print ('decoder encdec dropout')
     attention_output = self_attention_output_origin + attention_output
     # attention_output = self.encdec_attention_layer_norm(self_attention_output +
     #                                                     attention_output)
@@ -440,6 +444,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     layer_output = self.output_dense(intermediate_output)
 
     layer_output = self.output_dropout(layer_output)
+    print ('decoder output dropout')
     layer_output = attention_output_origin + layer_output
     # layer_output = self.output_layer_norm(layer_output + attention_output)
     # print ('new output_dense output', layer_output)
