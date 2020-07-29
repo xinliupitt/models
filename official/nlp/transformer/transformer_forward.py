@@ -28,7 +28,7 @@ from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
 is_train = True
-get_weights_flag = False
+get_weights_flag = True
 
 def _count_params(layer, trainable_only=True):
   """Returns the count of all model parameters, or just trainable ones."""

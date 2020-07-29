@@ -600,6 +600,8 @@ class TransformerEncoder(tf.keras.layers.Layer):
               intermediate_activation="relu",
               dropout_rate=0.0,
               attention_dropout_rate=0.0,
+              use_bias=False,
+              norm_first=True,
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=1e-6, dtype="float32")
@@ -779,6 +781,8 @@ class TransformerDecoder(tf.keras.layers.Layer):
               intermediate_activation="relu",
               dropout_rate=0.0,
               attention_dropout_rate=0.0,
+              use_bias=False,
+              norm_first=True,
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=1e-6, dtype="float32")
