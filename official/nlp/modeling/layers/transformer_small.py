@@ -84,9 +84,8 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
     dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
     dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
     inputs = [dummy_tensor, dummy_tensor, dummy_mask, dummy_mask]
-    output, cache = decoder_block(inputs)
-    print ('output', output)
-    print ('cache', cache)
+    output, _ = decoder_block(inputs)
+    # print ('output', output)
 
     decoder_block = transformer.TransformerDecoderLayer(
         num_attention_heads=num_attention_heads,
@@ -95,9 +94,38 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
         dropout_rate=0.1,
         attention_dropout_rate=0.1,
         use_bias=False)
-    output, cache = decoder_block(inputs)
-    print ('output', output)
-    print ('cache', cache)
+    output, _ = decoder_block(inputs)
+    # print ('output', output)
+
+  def test_use_bias_cache(self):
+    num_attention_heads = 2
+    hidden_size = 16
+    decoder_block = transformer.TransformerDecoderLayer(
+        num_attention_heads=num_attention_heads,
+        intermediate_size=32,
+        intermediate_activation='relu',
+        dropout_rate=0.1,
+        attention_dropout_rate=0.1)
+    # Forward path.
+    dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
+    dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
+    inputs = [dummy_tensor, dummy_tensor, dummy_mask, dummy_mask]
+    cache = _create_cache(2, 0, num_attention_heads,
+                          hidden_size // num_attention_heads)
+    output, cache = decoder_block(inputs, cache)
+    print ('output shape', output.shape)
+    print ('value shape', cache['value'].shape)
+
+    decoder_block = transformer.TransformerDecoderLayer(
+        num_attention_heads=num_attention_heads,
+        intermediate_size=32,
+        intermediate_activation='relu',
+        dropout_rate=0.1,
+        attention_dropout_rate=0.1,
+        use_bias=False)
+    output, _ = decoder_block(inputs)
+    print ('output shape', output.shape)
+    print ('value shape', cache['value'].shape)
 
 if __name__ == '__main__':
   tf.test.main()
