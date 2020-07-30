@@ -24,6 +24,8 @@ from __future__ import print_function
 workon_new = False
 
 import numpy as np
+from numpy import load
+from numpy import save
 
 import tensorflow as tf
 from official.modeling import tf_utils
@@ -227,7 +229,15 @@ class Transformer(tf.keras.Model):
       print ('inputs', inputs)
       if not workon_new:
         embedded_inputs = self.embedding_softmax_layer(inputs)
+        w_layer = self.embedding_softmax_layer.get_weights()
+        save('w_layer.npy', w_layer)
       else:
+        try:
+          w_layer = load('w_layer.npy', allow_pickle=True)
+          self.embedding_lookup.set_weights(w_layer)
+          print ('layer weight loaded successfully!')
+        except:
+          pass
         embedded_inputs = self.embedding_lookup(inputs, scale=True)
       print ("new?", workon_new)
       print ('embedded_inputs', embedded_inputs)
