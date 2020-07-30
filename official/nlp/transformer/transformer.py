@@ -224,7 +224,7 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("encode"):
       # Prepare inputs to the layer stack by adding positional encodings and
       # applying dropout.
-      # print ('inputs', inputs)
+      print ('inputs', inputs)
       if not workon_new:
         embedded_inputs = self.embedding_softmax_layer(inputs)
       else:
