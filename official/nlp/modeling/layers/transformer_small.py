@@ -71,6 +71,33 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
     self.assertEqual(output.shape, (2, 4, hidden_size))
     self.assertEqual(cache['value'].shape, (2, 4, 2, 8))
 
+  def test_use_bias(self):
+    num_attention_heads = 2
+    hidden_size = 16
+    decoder_block = transformer.TransformerDecoderLayer(
+        num_attention_heads=num_attention_heads,
+        intermediate_size=32,
+        intermediate_activation='relu',
+        dropout_rate=0.1,
+        attention_dropout_rate=0.1)
+    # Forward path.
+    dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
+    dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
+    inputs = [dummy_tensor, dummy_tensor, dummy_mask, dummy_mask]
+    output, cache = decoder_block(inputs)
+    print ('output', output)
+    print ('cache', cache)
+
+    decoder_block = transformer.TransformerDecoderLayer(
+        num_attention_heads=num_attention_heads,
+        intermediate_size=32,
+        intermediate_activation='relu',
+        dropout_rate=0.1,
+        attention_dropout_rate=0.1,
+        use_bias=False)
+    output, cache = decoder_block(inputs)
+    print ('output', output)
+    print ('cache', cache)
 
 if __name__ == '__main__':
   tf.test.main()
