@@ -86,8 +86,8 @@ class TransformerV2Test(tf.test.TestCase):
       model.set_weights(w)
       print ('Model begins!')
       print ('Model begins!')
-      # model([inputs, targets], training=True)
-      # print ("new params count", self._count_params(model))
+      model([inputs, targets], training=True)
+      print ("new params count", self._count_params(model))
 
       # print ('w[0]', w[0])
       # print ('weight count', len(w))
