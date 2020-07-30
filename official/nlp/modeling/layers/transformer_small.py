@@ -36,6 +36,9 @@ class TransformerLayerTest(keras_parameterized.TestCase):
     super(TransformerLayerTest, self).tearDown()
     tf.keras.mixed_precision.experimental.set_policy('float32')
 
+
+@keras_parameterized.run_all_keras_modes
+class TransformerDecoderLayerArgumentTest(keras_parameterized.TestCase):
   def test_use_bias_Transformer(self):
     num_attention_heads = 2
     hidden_size = 16
@@ -63,7 +66,6 @@ class TransformerLayerTest(keras_parameterized.TestCase):
     output = encoder_block(inputs)
     print ('output with bias', output)
 
-
 def _create_cache(batch_size, init_decode_length, num_heads, head_size):
   return {
       'key':
@@ -73,7 +75,6 @@ def _create_cache(batch_size, init_decode_length, num_heads, head_size):
           tf.zeros([batch_size, init_decode_length, num_heads, head_size],
                    dtype=tf.float32)
   }
-
 
 @keras_parameterized.run_all_keras_modes
 class TransformerDecoderLayerTest(keras_parameterized.TestCase):
