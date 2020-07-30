@@ -94,6 +94,6 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
       x = tf.reshape(inputs, [-1, self._embedding_width])
       logits = tf.matmul(x, self.embeddings, transpose_b=True)
 
-      return tf.reshape(logits, [batch_size, length, self.vocab_size])
+      return tf.reshape(logits, [batch_size, length, self._vocab_size])
     else:
       raise ValueError("mode {} is not valid.".format(mode))
