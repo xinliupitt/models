@@ -420,7 +420,7 @@ class Transformer(tf.keras.Model):
             cache=cache,
             decode_loop_step=i if self.params["padded_decode"] else None)
 
-      if workon_new:
+      if not workon_new:
         logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
       else:
         logits = self.embedding_lookup(decoder_outputs, mode="linear")
