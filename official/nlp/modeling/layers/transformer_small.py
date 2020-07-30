@@ -96,10 +96,13 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
         intermediate_activation='relu',
         dropout_rate=0.1,
         attention_dropout_rate=0.1,
-        use_bias=False)
+        use_bias=False,
+        norm_first=True,
+        norm_epsilon=1e-6)
     decoder_block_config = decoder_block.get_config()
-    new_decoder_block = transformer.TransformerDecoderLayer.from_config(decoder_block_config)
-    print ('new config', new_decoder_block.get_config())
+    new_decoder_block = transformer.TransformerDecoderLayer.from_config(
+        decoder_block_config)
+    self.assertEqual(decoder_block_config, new_decoder_block.get_config())
 
 if __name__ == '__main__':
   tf.test.main()
