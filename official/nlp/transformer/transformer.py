@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = True
+workon_new = False
 
 import numpy as np
 
@@ -95,6 +95,11 @@ class Transformer(tf.keras.Model):
     self.params = params
     self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
         params["vocab_size"], params["hidden_size"])
+    self.embedding_lookup = layers.OnDeviceEmbedding(
+        vocab_size=params["vocab_size"],
+        embedding_width=params["hidden_size"],
+        initializer=tf.random_normal_initializer(
+            mean=0., stddev=params["hidden_size"]**-0.5))
     self.encoder_stack = EncoderStack(params)
     self.encoder_layer = TransformerEncoder(params)
     self.decoder_stack = DecoderStack(params)
@@ -207,7 +212,10 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("encode"):
       # Prepare inputs to the layer stack by adding positional encodings and
       # applying dropout.
-      embedded_inputs = self.embedding_softmax_layer(inputs)
+      if not workon_new:
+        embedded_inputs = self.embedding_softmax_layer(inputs)
+      else:
+        embedded_inputs = self.embedding_lookup(inputs)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
       inputs_padding = model_utils.get_padding(inputs)
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
