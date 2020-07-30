@@ -74,13 +74,15 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
 
   def call(self, inputs, mode="embedding"):
     if mode=="embedding":
-      flat_inputs = tf.reshape(inputs, [-1])
+      # flat_inputs = tf.reshape(inputs, [-1])
+      flat_inputs = inputs, [-1]
       if self._use_one_hot:
         one_hot_data = tf.one_hot(
             flat_inputs, depth=self._vocab_size, dtype=self.embeddings.dtype)
         embeddings = tf.matmul(one_hot_data, self.embeddings)
       else:
         embeddings = tf.gather(self.embeddings, flat_inputs)
+      print ('new after gather', embeddings)
       embeddings = tf.reshape(
           embeddings,
           # Work around b/142213824: prefer concat to shape over a Python list.
