@@ -80,8 +80,10 @@ class TransformerV2Test(tf.test.TestCase):
 
     def test_create_model_train(self):
       model = transformer.create_model(self.params, True)
-      inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
-      targets = np.asarray([[4, 3, 0], [13, 19, 17], [20, 14, 1], [5, 7, 0]])
+      # inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
+      # targets = np.asarray([[4, 3, 0], [13, 19, 17], [20, 14, 1], [5, 7, 0]])
+      inputs = np.asarray([[5, 2, 1], [7, 5, 2], [1, 4, 9], [7, 5, 11]])
+      targets = np.asarray([[4, 3, 5], [13, 19, 17], [20, 14, 1], [5, 7, 8]])
       w = load('w.npy', allow_pickle=True)
       model.set_weights(w)
       print ('Model begins!')
@@ -105,7 +107,7 @@ class TransformerV2Test(tf.test.TestCase):
 
     def test_create_model_not_train(self):
       model = transformer.create_model(self.params, False)
-      inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
+      inputs = np.asarray([[5, 2, 1], [7, 5, 2], [1, 4, 9], [7, 5, 11]])
       w_eval = load('w_eval.npy', allow_pickle=True)
       model.set_weights(w_eval)
       model([inputs], training=False)

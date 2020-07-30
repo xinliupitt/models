@@ -71,6 +71,18 @@ def create_model(params, is_train):
       outputs, scores = ret["outputs"], ret["scores"]
       return tf.keras.Model(inputs, [outputs, scores])
 
+def embedding_linear(embedding_matrix, x):
+  """Uses embeddings as linear transformation weights."""
+  with tf.name_scope("presoftmax_linear"):
+    batch_size = tf.shape(x)[0]
+    length = tf.shape(x)[1]
+    hidden_size = tf.shape(x)[2]
+    vocab_size = tf.shape(embedding_matrix)[0]
+
+    x = tf.reshape(x, [-1, hidden_size])
+    logits = tf.matmul(x, embedding_matrix, transpose_b=True)
+
+    return tf.reshape(logits, [batch_size, length, vocab_size])
 
 class Transformer(tf.keras.Model):
   """Transformer model with Keras.
