@@ -229,8 +229,12 @@ class Transformer(tf.keras.Model):
       print ('inputs', inputs)
       if not workon_new:
         embedded_inputs = self.embedding_softmax_layer(inputs)
-        w_layer = self.embedding_softmax_layer.get_weights()
-        save('w_layer.npy', w_layer)
+        try:
+          w_layer = self.embedding_softmax_layer.get_weights()
+          save('w_layer.npy', w_layer)
+          print ("layer weights saved!")
+        except:
+          pass
       else:
         try:
           w_layer = load('w_layer.npy', allow_pickle=True)
