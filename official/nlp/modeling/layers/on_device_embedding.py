@@ -88,6 +88,7 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
           # Work around b/142213824: prefer concat to shape over a Python list.
           tf.concat([tf.shape(inputs), [self._embedding_width]], axis=0))
       embeddings.set_shape(inputs.shape.as_list() + [self._embedding_width])
+      print ('new not scaled', embeddings)
       return embeddings
     elif mode == "linear":
       batch_size = tf.shape(inputs)[0]
