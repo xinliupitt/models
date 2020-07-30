@@ -228,7 +228,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         embedded_inputs = self.embedding_softmax_layer(inputs)
       else:
-        embedded_inputs = self.embedding_lookup(inputs)
+        embedded_inputs = self.embedding_lookup(inputs, scale=True)
       # print ("new?", workon_new)
       # print ('embedded_inputs', embedded_inputs)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
@@ -276,7 +276,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         decoder_inputs = self.embedding_softmax_layer(targets)
       else:
-        decoder_inputs = self.embedding_lookup(targets)
+        decoder_inputs = self.embedding_lookup(targets, scale=True)
       decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
       with tf.name_scope("shift_targets"):
