@@ -377,6 +377,7 @@ class Transformer(tf.keras.Model):
         decoder_input = self.embedding_softmax_layer(decoder_input)
       else:
         decoder_input = self.embedding_lookup(decoder_input, scale=True)
+        print ('front symbols_to_logits_fn')
 
       if self.params["padded_decode"]:
         timing_signal_shape = timing_signal.shape.as_list()
@@ -423,6 +424,7 @@ class Transformer(tf.keras.Model):
         logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
       else:
         logits = self.embedding_lookup(decoder_outputs, mode="linear")
+        print ('below symbols_to_logits_fn')
       logits = tf.squeeze(logits, axis=[1])
       return logits, cache
 
