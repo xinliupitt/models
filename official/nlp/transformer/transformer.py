@@ -229,8 +229,8 @@ class Transformer(tf.keras.Model):
         embedded_inputs = self.embedding_softmax_layer(inputs)
       else:
         embedded_inputs = self.embedding_lookup(inputs, scale=True)
-      # print ("new?", workon_new)
-      # print ('embedded_inputs', embedded_inputs)
+      print ("new?", workon_new)
+      print ('embedded_inputs', embedded_inputs)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
       inputs_padding = model_utils.get_padding(inputs)
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
