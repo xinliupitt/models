@@ -425,6 +425,9 @@ class Transformer(tf.keras.Model):
       else:
         logits = self.embedding_lookup(decoder_outputs, mode="linear")
         print ('below symbols_to_logits_fn')
+
+      print ('New?', workon_new)
+      print ('decoded logits', logits)
       logits = tf.squeeze(logits, axis=[1])
       return logits, cache
 
