@@ -67,7 +67,8 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
     self.embeddings = self.add_weight(
         "embeddings",
         shape=[self._vocab_size, self._embedding_width],
-        initializer=self._initializer,
+        initializer=tf.random_normal_initializer(
+              mean=0., stddev=self.hidden_size**-0.5, seed=1234),
         dtype=tf.float32)
 
     super(OnDeviceEmbedding, self).build(input_shape)
