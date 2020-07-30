@@ -51,7 +51,7 @@ class TransformerLayerTest(keras_parameterized.TestCase):
     dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
     dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
     inputs = [dummy_tensor, dummy_mask]
-    output, = encoder_block(inputs)
+    output = encoder_block(inputs)
     print ('output no bias',output)
 
     encoder_block = transformer.Transformer(
@@ -61,24 +61,8 @@ class TransformerLayerTest(keras_parameterized.TestCase):
         dropout_rate=0.1,
         attention_dropout_rate=0.1)
     # Forward path.
-    output, = encoder_block(inputs)
+    output = encoder_block(inputs)
     print ('output with bias',output)
-
-  def test_get_config(self):
-    num_attention_heads = 2
-    decoder_block = transformer.Transformer(
-        num_attention_heads=num_attention_heads,
-        intermediate_size=32,
-        intermediate_activation='relu',
-        dropout_rate=0.1,
-        attention_dropout_rate=0.1,
-        use_bias=False,
-        norm_first=True,
-        norm_epsilon=1e-6)
-    decoder_block_config = decoder_block.get_config()
-    new_decoder_block = transformer.TransformerDecoderLayer.from_config(
-        decoder_block_config)
-    self.assertEqual(decoder_block_config, new_decoder_block.get_config())
 
 
 def _create_cache(batch_size, init_decode_length, num_heads, head_size):
