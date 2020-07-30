@@ -25,6 +25,31 @@ import tensorflow as tf
 from tensorflow.python.keras import keras_parameterized  # pylint: disable=g-direct-tensorflow-import
 from official.nlp.modeling.layers import transformer
 
+num_attention_heads = 2
+hidden_size = 16
+encoder_block = transformer.Transformer(
+    num_attention_heads=num_attention_heads,
+    intermediate_size=32,
+    intermediate_activation='relu',
+    dropout_rate=0.1,
+    attention_dropout_rate=0.1,
+    use_bias=False)
+# Forward path.
+dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
+dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
+inputs = [dummy_tensor, dummy_mask]
+output = encoder_block(inputs)
+print ('output no bias', output)
+
+encoder_block = transformer.Transformer(
+    num_attention_heads=num_attention_heads,
+    intermediate_size=32,
+    intermediate_activation='relu',
+    dropout_rate=0.1,
+    attention_dropout_rate=0.1)
+# Forward path.
+output = encoder_block(inputs)
+print ('output with bias', output)
 
 # This decorator runs the test in V1, V2-Eager, and V2-Functional mode. It
 # guarantees forward compatibility of this code for the V2 switchover.
@@ -37,32 +62,32 @@ class TransformerLayerTest(keras_parameterized.TestCase):
     super(TransformerLayerTest, self).tearDown()
     tf.keras.mixed_precision.experimental.set_policy('float32')
 
-  def test_use_bias(self):
-    num_attention_heads = 2
-    hidden_size = 16
-    encoder_block = transformer.Transformer(
-        num_attention_heads=num_attention_heads,
-        intermediate_size=32,
-        intermediate_activation='relu',
-        dropout_rate=0.1,
-        attention_dropout_rate=0.1,
-        use_bias=False)
-    # Forward path.
-    dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
-    dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
-    inputs = [dummy_tensor, dummy_mask]
-    output = encoder_block(inputs)
-    print ('output no bias',output)
-
-    encoder_block = transformer.Transformer(
-        num_attention_heads=num_attention_heads,
-        intermediate_size=32,
-        intermediate_activation='relu',
-        dropout_rate=0.1,
-        attention_dropout_rate=0.1)
-    # Forward path.
-    output = encoder_block(inputs)
-    print ('output with bias',output)
+  # def test_use_bias(self):
+  #   num_attention_heads = 2
+  #   hidden_size = 16
+  #   encoder_block = transformer.Transformer(
+  #       num_attention_heads=num_attention_heads,
+  #       intermediate_size=32,
+  #       intermediate_activation='relu',
+  #       dropout_rate=0.1,
+  #       attention_dropout_rate=0.1,
+  #       use_bias=False)
+  #   # Forward path.
+  #   dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
+  #   dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
+  #   inputs = [dummy_tensor, dummy_mask]
+  #   output = encoder_block(inputs)
+  #   print ('output no bias', output)
+  #
+  #   encoder_block = transformer.Transformer(
+  #       num_attention_heads=num_attention_heads,
+  #       intermediate_size=32,
+  #       intermediate_activation='relu',
+  #       dropout_rate=0.1,
+  #       attention_dropout_rate=0.1)
+  #   # Forward path.
+  #   output = encoder_block(inputs)
+  #   print ('output with bias', output)
 
 
 def _create_cache(batch_size, init_decode_length, num_heads, head_size):
