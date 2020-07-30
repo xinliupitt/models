@@ -262,7 +262,10 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("decode"):
       # Prepare inputs to decoder layers by shifting targets, adding positional
       # encoding and applying dropout.
-      decoder_inputs = self.embedding_softmax_layer(targets)
+      if not workon_new:
+        decoder_inputs = self.embedding_softmax_layer(targets)
+      else:
+        decoder_inputs = self.embedding_lookup(targets)
       decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
       with tf.name_scope("shift_targets"):
