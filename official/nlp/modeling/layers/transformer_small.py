@@ -73,7 +73,6 @@ class TransformerArgumentTest(keras_parameterized.TestCase):
         encoder_block_config)
     self.assertEqual(encoder_block_config, new_encoder_block.get_config())
 
-
 def _create_cache(batch_size, init_decode_length, num_heads, head_size):
   return {
       'key':
