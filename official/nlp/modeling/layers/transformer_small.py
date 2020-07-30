@@ -69,7 +69,7 @@ class TransformerArgumentTest(keras_parameterized.TestCase):
         norm_first=True,
         norm_epsilon=1e-6)
     encoder_block_config = encoder_block.get_config()
-    new_encoder_block = transformer.TransformerDecoderLayer.from_config(
+    new_encoder_block = transformer.Transformer.from_config(
         encoder_block_config)
     self.assertEqual(encoder_block_config, new_encoder_block.get_config())
 
