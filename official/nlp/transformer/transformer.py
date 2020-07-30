@@ -214,8 +214,12 @@ class Transformer(tf.keras.Model):
       # applying dropout.
       if not workon_new:
         embedded_inputs = self.embedding_softmax_layer(inputs)
+        for v in self.embedding_softmax_layer.trainable_variables:
+          print (v)
       else:
         embedded_inputs = self.embedding_lookup(inputs)
+        for v in self.embedding_lookup.trainable_variables:
+          print (v)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
       inputs_padding = model_utils.get_padding(inputs)
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
