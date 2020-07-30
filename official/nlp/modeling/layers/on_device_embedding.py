@@ -74,8 +74,8 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
 
   def call(self, inputs, mode="embedding"):
     if mode=="embedding":
-      # flat_inputs = tf.reshape(inputs, [-1])
-      flat_inputs = inputs
+      flat_inputs = tf.reshape(inputs, [-1])
+      # flat_inputs = inputs
       if self._use_one_hot:
         one_hot_data = tf.one_hot(
             flat_inputs, depth=self._vocab_size, dtype=self.embeddings.dtype)
