@@ -314,8 +314,10 @@ class Transformer(tf.keras.Model):
             attention_mask)
 
       print ("new decoder params count", self._count_params(self.decoder_layer))
-
-      logits = self.embedding_softmax_layer(outputs, mode="linear")
+      if not workon_new:
+        logits = self.embedding_softmax_layer(outputs, mode="linear")
+      else:
+        logits = self.embedding_lookup(outputs, mode="linear")
       logits = tf.cast(logits, tf.float32)
       return logits
 

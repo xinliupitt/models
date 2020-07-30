@@ -72,17 +72,28 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
 
     super(OnDeviceEmbedding, self).build(input_shape)
 
-  def call(self, inputs):
-    flat_inputs = tf.reshape(inputs, [-1])
-    if self._use_one_hot:
-      one_hot_data = tf.one_hot(
-          flat_inputs, depth=self._vocab_size, dtype=self.embeddings.dtype)
-      embeddings = tf.matmul(one_hot_data, self.embeddings)
+  def call(self, inputs, mode="embedding"):
+    if mode=="embedding":
+      flat_inputs = tf.reshape(inputs, [-1])
+      if self._use_one_hot:
+        one_hot_data = tf.one_hot(
+            flat_inputs, depth=self._vocab_size, dtype=self.embeddings.dtype)
+        embeddings = tf.matmul(one_hot_data, self.embeddings)
+      else:
+        embeddings = tf.gather(self.embeddings, flat_inputs)
+      embeddings = tf.reshape(
+          embeddings,
+          # Work around b/142213824: prefer concat to shape over a Python list.
+          tf.concat([tf.shape(inputs), [self._embedding_width]], axis=0))
+      embeddings.set_shape(inputs.shape.as_list() + [self._embedding_width])
+      return embeddings
+    elif mode == "linear":
+      batch_size = tf.shape(inputs)[0]
+      length = tf.shape(inputs)[1]
+
+      x = tf.reshape(inputs, [-1, self._embedding_width])
+      logits = tf.matmul(x, self.embeddings, transpose_b=True)
+
+      return tf.reshape(logits, [batch_size, length, self.vocab_size])
     else:
-      embeddings = tf.gather(self.embeddings, flat_inputs)
-    embeddings = tf.reshape(
-        embeddings,
-        # Work around b/142213824: prefer concat to shape over a Python list.
-        tf.concat([tf.shape(inputs), [self._embedding_width]], axis=0))
-    embeddings.set_shape(inputs.shape.as_list() + [self._embedding_width])
-    return embeddings
+      raise ValueError("mode {} is not valid.".format(mode))
