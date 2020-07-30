@@ -230,7 +230,9 @@ class TransformerArgumentTest(keras_parameterized.TestCase):
         intermediate_activation='relu',
         dropout_rate=0.1,
         attention_dropout_rate=0.1,
-        use_bias=False)
+        use_bias=False,
+        norm_first=True,
+        norm_epsilon=1e-6)
     # Forward path.
     dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
     dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
@@ -296,7 +298,9 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
         intermediate_activation='relu',
         dropout_rate=0.1,
         attention_dropout_rate=0.1,
-        use_bias=False)
+        use_bias=False,
+        norm_first=True,
+        norm_epsilon=1e-6)
     # Forward path.
     dummy_tensor = tf.zeros([2, 4, 16], dtype=tf.float32)
     dummy_mask = tf.zeros([2, 4, 4], dtype=tf.float32)
