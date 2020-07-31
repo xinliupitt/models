@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = True
+workon_new = False
 
 import numpy as np
 from numpy import load
@@ -113,7 +113,8 @@ class Transformer(tf.keras.Model):
         vocab_size=params["vocab_size"],
         embedding_width=params["hidden_size"],
         initializer=tf.random_normal_initializer(
-            mean=0., stddev=params["hidden_size"]**-0.5))
+            mean=0., stddev=params["hidden_size"]**-0.5, seed=1234),
+        scale=True)
     self.encoder_stack = EncoderStack(params)
     self.encoder_layer = TransformerEncoder(params)
     self.decoder_stack = DecoderStack(params)
@@ -242,7 +243,7 @@ class Transformer(tf.keras.Model):
           print ('layer weight loaded successfully!')
         except:
           pass
-        embedded_inputs = self.embedding_lookup(inputs, scale=True)
+        embedded_inputs = self.embedding_lookup(inputs)
       print ("new?", workon_new)
       print ('embedded_inputs', embedded_inputs)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
@@ -290,7 +291,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         decoder_inputs = self.embedding_softmax_layer(targets)
       else:
-        decoder_inputs = self.embedding_lookup(targets, scale=True)
+        decoder_inputs = self.embedding_lookup(targets)
       decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
       with tf.name_scope("shift_targets"):
