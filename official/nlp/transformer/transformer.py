@@ -239,7 +239,7 @@ class Transformer(tf.keras.Model):
       else:
         try:
           w_layer = load('w_layer.npy', allow_pickle=True)
-          self.embedding_lookup.set_weights(w_layer)
+          # self.embedding_lookup.set_weights(w_layer)
           print ('layer weight loaded successfully!')
         except:
           pass
