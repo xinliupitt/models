@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = False
+workon_new = True
 
 import numpy as np
 from numpy import load
@@ -342,6 +342,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         logits = self.embedding_softmax_layer(outputs, mode="linear")
       else:
+        print ('OnDevice Weight', self.embedding_lookup.embeddings)
         logits = self.embedding_lookup(outputs, mode="linear")
       logits = tf.cast(logits, tf.float32)
       return logits

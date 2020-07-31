@@ -27,8 +27,8 @@ import tensorflow as tf
 from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
-is_train = False
-get_weights_flag = True
+is_train = True
+get_weights_flag = False
 
 def _count_params(layer, trainable_only=True):
   """Returns the count of all model parameters, or just trainable ones."""
@@ -67,7 +67,7 @@ class TransformerV2Test(tf.test.TestCase):
     params["filter_size"] = 14
     params["num_heads"] = 2
     params["vocab_size"] = 41
-    params["extra_decode_length"] = 2
+    params["extra_decode_length"] = 0
     params["beam_size"] = 3
     params["dtype"] = tf.float32
 
