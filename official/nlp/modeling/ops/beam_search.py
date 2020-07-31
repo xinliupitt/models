@@ -191,6 +191,8 @@ class SequenceBeamSearch(tf.Module):
         flat_ids = _flatten_beam_dim(alive_seq)  # [batch_size * beam_size]
       flat_cache = tf.nest.map_structure(_flatten_beam_dim, alive_cache)
 
+      print ('flat_ids', flat_ids)
+
       flat_logits, flat_cache = self.symbols_to_logits_fn(
           flat_ids, i, flat_cache)
 
