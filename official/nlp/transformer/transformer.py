@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = False
+workon_new = True
 
 import numpy as np
 from numpy import load
@@ -114,7 +114,7 @@ class Transformer(tf.keras.Model):
         embedding_width=params["hidden_size"],
         initializer=tf.random_normal_initializer(
             mean=0., stddev=params["hidden_size"]**-0.5, seed=1234),
-        scale=True)
+        use_scale=True)
     self.encoder_stack = EncoderStack(params)
     self.encoder_layer = TransformerEncoder(params)
     self.decoder_stack = DecoderStack(params)
