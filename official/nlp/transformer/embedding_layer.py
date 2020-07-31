@@ -77,12 +77,12 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
     """Applies embedding based on inputs tensor."""
     with tf.name_scope("embedding"):
       # Create binary mask of size [batch_size, length]
-      print ('old shared_weights', self.shared_weights)
-      print ('old inputs', inputs)
+      # print ('old shared_weights', self.shared_weights)
+      # print ('old inputs', inputs)
       embeddings = tf.gather(self.shared_weights, inputs)
-      # print ('old after gather', embeddings)
+      print ('old after gather', embeddings)
       mask = tf.cast(tf.not_equal(inputs, 0), embeddings.dtype)
-      # print ('mask', mask)
+      print ('mask', mask)
       embeddings *= tf.expand_dims(mask, -1)
       print ('emb after masking', embeddings)
       # Scale embedding by the sqrt of the hidden size
