@@ -379,8 +379,8 @@ class Transformer(tf.keras.Model):
         decoder_input = self.embedding_lookup(decoder_input, scale=True)
         print ('front symbols_to_logits_fn')
 
-      print ("New?", workon_new)
-      print ('decoder_input', decoder_input)
+      # print ("New?", workon_new)
+      # print ('decoder_input', decoder_input)
 
       if self.params["padded_decode"]:
         timing_signal_shape = timing_signal.shape.as_list()
