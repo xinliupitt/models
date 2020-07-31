@@ -107,7 +107,8 @@ class TransformerV2Test(tf.test.TestCase):
 
     def test_create_model_not_train(self):
       model = transformer.create_model(self.params, False)
-      inputs = np.asarray([[5, 2, 1], [7, 5, 2], [1, 4, 9], [7, 5, 11]])
+      # inputs = np.asarray([[5, 2, 1], [7, 5, 2], [1, 4, 9], [7, 5, 11]])
+      inputs = np.asarray([[5], [7], [1], [7]])
       w_eval = load('w_eval.npy', allow_pickle=True)
       model.set_weights(w_eval)
       model([inputs], training=False)
