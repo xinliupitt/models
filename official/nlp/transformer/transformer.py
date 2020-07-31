@@ -342,8 +342,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         logits = self.embedding_softmax_layer(outputs, mode="linear")
       else:
-        print ('OnDevice Weight', self.embedding_lookup.embeddings)
-        logits = self.embedding_lookup(outputs, mode="linear")
+        logits = embedding_linear(self.embedding_lookup.embeddings, outputs)
       logits = tf.cast(logits, tf.float32)
       return logits
 
