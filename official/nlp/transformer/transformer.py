@@ -377,7 +377,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         decoder_input = self.embedding_softmax_layer(decoder_input)
       else:
-        decoder_input = self.embedding_lookup(decoder_input, scale=True)
+        decoder_input = self.embedding_lookup(decoder_input)
         print ('front symbols_to_logits_fn')
 
       # print ("New?", workon_new)
