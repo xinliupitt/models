@@ -423,7 +423,7 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
       else:
-        logits = self.embedding_lookup(decoder_outputs, mode="linear")
+        logits = embedding_linear(self.embedding_lookup.embeddings, decoder_outputs)
         print ('below symbols_to_logits_fn')
 
       print ('New?', workon_new)
