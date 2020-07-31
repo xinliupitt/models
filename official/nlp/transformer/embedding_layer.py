@@ -80,14 +80,14 @@ class EmbeddingSharedWeights(tf.keras.layers.Layer):
       # print ('old shared_weights', self.shared_weights)
       # print ('old inputs', inputs)
       embeddings = tf.gather(self.shared_weights, inputs)
-      print ('old after gather', embeddings)
+      # print ('old after gather', embeddings)
       mask = tf.cast(tf.not_equal(inputs, 0), embeddings.dtype)
-      print ('mask', mask)
+      # print ('mask', mask)
       embeddings *= tf.expand_dims(mask, -1)
-      print ('emb after masking', embeddings)
+      # print ('emb after masking', embeddings)
       # Scale embedding by the sqrt of the hidden size
       embeddings *= self.hidden_size ** 0.5
-      print ('emb after scaling', embeddings)
+      # print ('emb after scaling', embeddings)
       return embeddings
 
   def _linear(self, inputs):

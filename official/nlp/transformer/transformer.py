@@ -244,8 +244,8 @@ class Transformer(tf.keras.Model):
         except:
           pass
         embedded_inputs = self.embedding_lookup(inputs)
-        mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
-        embedded_inputs *= tf.expand_dims(mask, -1)
+        embedding_mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
+        embedded_inputs *= tf.expand_dims(embedding_mask, -1)
       print ("new?", workon_new)
       print ('embedded_inputs', embedded_inputs)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
@@ -294,8 +294,8 @@ class Transformer(tf.keras.Model):
         decoder_inputs = self.embedding_softmax_layer(targets)
       else:
         decoder_inputs = self.embedding_lookup(targets)
-        mask = tf.cast(tf.not_equal(targets, 0), self.embedding_lookup.embeddings.dtype)
-        decoder_inputs *= tf.expand_dims(mask, -1)
+        embedding_mask = tf.cast(tf.not_equal(targets, 0), self.embedding_lookup.embeddings.dtype)
+        decoder_inputs *= tf.expand_dims(embedding_mask, -1)
       decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
       with tf.name_scope("shift_targets"):
@@ -381,7 +381,10 @@ class Transformer(tf.keras.Model):
       if not workon_new:
         decoder_input = self.embedding_softmax_layer(decoder_input)
       else:
+        source_decoder_input = decoder_input
         decoder_input = self.embedding_lookup(decoder_input)
+        embedding_mask = tf.cast(tf.not_equal(source_decoder_input, 0), self.embedding_lookup.embeddings.dtype)
+        decoder_input *= tf.expand_dims(embedding_mask, -1)
         print ('front symbols_to_logits_fn')
 
       # print ("New?", workon_new)
