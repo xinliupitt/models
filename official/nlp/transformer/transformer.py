@@ -208,6 +208,8 @@ class Transformer(tf.keras.Model):
       # applying dropout.
       # embedded_inputs = self.embedding_softmax_layer(inputs)
       embedded_inputs = self.embedding_lookup(inputs)
+      embedding_mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
+      embedded_inputs *= tf.expand_dims(embedding_mask, -1)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
       inputs_padding = model_utils.get_padding(inputs)
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
@@ -246,6 +248,8 @@ class Transformer(tf.keras.Model):
       # encoding and applying dropout.
       # decoder_inputs = self.embedding_softmax_layer(targets)
       decoder_inputs = self.embedding_lookup(targets)
+      embedding_mask = tf.cast(tf.not_equal(targets, 0), self.embedding_lookup.embeddings.dtype)
+      decoder_inputs *= tf.expand_dims(embedding_mask, -1)
       decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
       with tf.name_scope("shift_targets"):
@@ -324,7 +328,10 @@ class Transformer(tf.keras.Model):
 
       # Preprocess decoder input by getting embeddings and adding timing signal.
       # decoder_input = self.embedding_softmax_layer(decoder_input)
+      source_decoder_input = decoder_input
       decoder_input = self.embedding_lookup(decoder_input)
+      embedding_mask = tf.cast(tf.not_equal(source_decoder_input, 0), self.embedding_lookup.embeddings.dtype)
+      decoder_input *= tf.expand_dims(embedding_mask, -1)
 
       if self.params["padded_decode"]:
         timing_signal_shape = timing_signal.shape.as_list()
