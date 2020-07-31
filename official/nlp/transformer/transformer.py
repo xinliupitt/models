@@ -69,6 +69,18 @@ def create_model(params, is_train):
       outputs, scores = ret["outputs"], ret["scores"]
       return tf.keras.Model(inputs, [outputs, scores])
 
+def embedding_linear(embedding_matrix, x):
+  """Uses embeddings as linear transformation weights."""
+  with tf.name_scope("presoftmax_linear"):
+    batch_size = tf.shape(x)[0]
+    length = tf.shape(x)[1]
+    hidden_size = tf.shape(x)[2]
+    vocab_size = tf.shape(embedding_matrix)[0]
+
+    x = tf.reshape(x, [-1, hidden_size])
+    logits = tf.matmul(x, embedding_matrix, transpose_b=True)
+
+    return tf.reshape(logits, [batch_size, length, vocab_size])
 
 class Transformer(tf.keras.Model):
   """Transformer model with Keras.
@@ -90,8 +102,14 @@ class Transformer(tf.keras.Model):
     """
     super(Transformer, self).__init__(name=name)
     self.params = params
-    self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
-        params["vocab_size"], params["hidden_size"])
+    # self.embedding_softmax_layer = embedding_layer.EmbeddingSharedWeights(
+    #     params["vocab_size"], params["hidden_size"])
+    self.embedding_lookup = layers.OnDeviceEmbedding(
+        vocab_size=params["vocab_size"],
+        embedding_width=params["hidden_size"],
+        initializer=tf.random_normal_initializer(
+            mean=0., stddev=params["hidden_size"]**-0.5),
+        use_scale=True)
     # self.encoder_stack = EncoderStack(params)
     self.encoder_layer = TransformerEncoder(params)
     # self.decoder_stack = DecoderStack(params)
@@ -188,7 +206,8 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("encode"):
       # Prepare inputs to the layer stack by adding positional encodings and
       # applying dropout.
-      embedded_inputs = self.embedding_softmax_layer(inputs)
+      # embedded_inputs = self.embedding_softmax_layer(inputs)
+      embedded_inputs = self.embedding_lookup(inputs)
       embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
       inputs_padding = model_utils.get_padding(inputs)
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
@@ -225,7 +244,8 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("decode"):
       # Prepare inputs to decoder layers by shifting targets, adding positional
       # encoding and applying dropout.
-      decoder_inputs = self.embedding_softmax_layer(targets)
+      # decoder_inputs = self.embedding_softmax_layer(targets)
+      decoder_inputs = self.embedding_lookup(targets)
       decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
       attention_bias = tf.cast(attention_bias, self.params["dtype"])
       with tf.name_scope("shift_targets"):
@@ -271,7 +291,8 @@ class Transformer(tf.keras.Model):
           self_attention_mask,
           attention_mask)
 
-      logits = self.embedding_softmax_layer(outputs, mode="linear")
+      # logits = self.embedding_softmax_layer(outputs, mode="linear")
+      logits = embedding_linear(self.embedding_lookup.embeddings, outputs)
       logits = tf.cast(logits, tf.float32)
       return logits
 
@@ -302,7 +323,8 @@ class Transformer(tf.keras.Model):
       decoder_input = ids[:, -1:]
 
       # Preprocess decoder input by getting embeddings and adding timing signal.
-      decoder_input = self.embedding_softmax_layer(decoder_input)
+      # decoder_input = self.embedding_softmax_layer(decoder_input)
+      decoder_input = self.embedding_lookup(decoder_input)
 
       if self.params["padded_decode"]:
         timing_signal_shape = timing_signal.shape.as_list()
@@ -346,7 +368,8 @@ class Transformer(tf.keras.Model):
           cache=cache,
           decode_loop_step=i if self.params["padded_decode"] else None)
 
-      logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
+      # logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
+      logits = embedding_linear(self.embedding_lookup.embeddings, decoder_outputs)
       logits = tf.squeeze(logits, axis=[1])
       return logits, cache
 

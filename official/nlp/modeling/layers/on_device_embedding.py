@@ -45,6 +45,7 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
                embedding_width,
                initializer="glorot_uniform",
                use_one_hot=False,
+               use_scale=False,
                **kwargs):
 
     super(OnDeviceEmbedding, self).__init__(**kwargs)
@@ -52,6 +53,7 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
     self._embedding_width = embedding_width
     self._initializer = initializer
     self._use_one_hot = use_one_hot
+    self._use_scale = use_scale
 
   def get_config(self):
     config = {
@@ -59,6 +61,7 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
         "embedding_width": self._embedding_width,
         "initializer": self._initializer,
         "use_one_hot": self._use_one_hot,
+        "scale": self._use_scale,
     }
     base_config = super(OnDeviceEmbedding, self).get_config()
     return dict(list(base_config.items()) + list(config.items()))
@@ -85,4 +88,6 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
         # Work around b/142213824: prefer concat to shape over a Python list.
         tf.concat([tf.shape(inputs), [self._embedding_width]], axis=0))
     embeddings.set_shape(inputs.shape.as_list() + [self._embedding_width])
+    if self._use_scale:
+      embeddings *= self._embedding_width ** 0.5
     return embeddings
