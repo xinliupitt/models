@@ -76,8 +76,6 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
     super(OnDeviceEmbedding, self).build(input_shape)
 
   def call(self, inputs):
-    print ('new embedding weight', self.embeddings)
-    print ('new inputs', inputs)
     flat_inputs = tf.reshape(inputs, [-1])
     if self._use_one_hot:
       one_hot_data = tf.one_hot(
