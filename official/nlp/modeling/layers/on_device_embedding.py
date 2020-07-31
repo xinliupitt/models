@@ -38,6 +38,9 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
       lookup. Defaults to False (that is, using tf.gather). Setting this option
       to True may improve performance, especially on small vocabulary sizes, but
       will generally require more memory.
+    use_scale: Whether to scale the output embeddings. Defaults to False (that
+      is, not to scale). Setting this option to True will let values in output
+      embeddings multiplied by self._embedding_width ** 0.5.
   """
 
   def __init__(self,
@@ -61,7 +64,7 @@ class OnDeviceEmbedding(tf.keras.layers.Layer):
         "embedding_width": self._embedding_width,
         "initializer": self._initializer,
         "use_one_hot": self._use_one_hot,
-        "scale": self._use_scale,
+        "use_scale": self._use_scale,
     }
     base_config = super(OnDeviceEmbedding, self).get_config()
     return dict(list(base_config.items()) + list(config.items()))
