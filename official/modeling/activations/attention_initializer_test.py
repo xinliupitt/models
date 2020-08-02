@@ -36,7 +36,7 @@ class AttentionInitializerTest(keras_parameterized.TestCase):
     input_tensor = tf.keras.Input(shape=[hidden_size])
     dense_layer(input_tensor)
     weights = dense_layer.get_weights()
-    print ('weights shape', weights[0].shape[1])
+    print ('weights shape', weights[0].shape[0])
 
 if __name__ == '__main__':
   tf.test.main()
