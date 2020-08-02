@@ -22,16 +22,17 @@ import tensorflow as tf
 
 from tensorflow.python.keras import keras_parameterized  # pylint: disable=g-direct-tensorflow-import
 from official.modeling.activations import attention_initializer
-
+from official.nlp.modeling import layers
 
 @keras_parameterized.run_all_keras_modes
 class AttentionInitializerTest(keras_parameterized.TestCase):
 
   def test_attention_initializer(self):
-    initialized_weights = attention_initializer.attention_initializer(32)
-    print ('attention weights', initialized_weights)
-    print ('shape', initialized_weights.shape)
-
+    query_dense_layer = layers.DenseEinsum(
+        output_shape=(2, 4),
+        kernel_initializer=attention_initializer.attention_initializer(16))
+    weights = query_dense_layer._kernel
+    print ('weights', weights)
 
 if __name__ == '__main__':
   tf.test.main()
