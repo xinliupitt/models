@@ -30,6 +30,7 @@ class AttentionInitializerTest(keras_parameterized.TestCase):
   def test_attention_initializer(self):
     initialized_weights = attention_initializer.attention_initializer(32)
     print ('attention weights', initialized_weights)
+    print ('shape', initialized_weights.shape)
 
 
 if __name__ == '__main__':
