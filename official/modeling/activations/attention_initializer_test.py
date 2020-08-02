@@ -21,14 +21,14 @@ from __future__ import print_function
 import tensorflow as tf
 
 from tensorflow.python.keras import keras_parameterized  # pylint: disable=g-direct-tensorflow-import
-from official.modeling import activations
+from official.modeling.activations import attention_initializer
 
 
 @keras_parameterized.run_all_keras_modes
 class AttentionInitializerTest(keras_parameterized.TestCase):
 
   def test_attention_initializer(self):
-    initialized_weights = activations.attention_initializer(32)
+    initialized_weights = attention_initializer.attention_initializer(32)
     print ('attention weights', initialized_weights)
 
 
