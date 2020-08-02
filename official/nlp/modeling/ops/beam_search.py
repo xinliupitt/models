@@ -192,6 +192,7 @@ class SequenceBeamSearch(tf.Module):
       flat_cache = tf.nest.map_structure(_flatten_beam_dim, alive_cache)
 
       print ('flat_ids', flat_ids)
+      print ('beam attention bias', flat_cache.get("encoder_decoder_attention_bias"))
 
       flat_logits, flat_cache = self.symbols_to_logits_fn(
           flat_ids, i, flat_cache)

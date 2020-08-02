@@ -27,34 +27,8 @@ import tensorflow as tf
 from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
-is_train = True
-get_weights_flag = False
-
-def _count_params(layer, trainable_only=True):
-  """Returns the count of all model parameters, or just trainable ones."""
-  if not trainable_only:
-    return layer.count_params()
-  else:
-    return int(
-        np.sum([
-            tf.keras.backend.count_params(p) for p in layer.trainable_weights
-        ]))
-
-# def _count_params_model(model_name):
-#   total_parameters = 0
-#   for variable in model_name.trainable_variables:
-#       # shape is an array of tf.Dimension
-#       shape = variable.get_shape()
-#       # print(shape)
-#       # print(len(shape))
-#       variable_parameters = 1
-#       for dim in shape:
-#           # print(dim)
-#           variable_parameters *= dim
-#       # print(variable_parameters)
-#       total_parameters += variable_parameters
-#   print(total_parameters)
-#   return total_parameters
+is_train = False
+get_weights_flag = True
 
 class TransformerV2Test(tf.test.TestCase):
 
@@ -67,7 +41,7 @@ class TransformerV2Test(tf.test.TestCase):
     params["filter_size"] = 14
     params["num_heads"] = 2
     params["vocab_size"] = 41
-    params["extra_decode_length"] = 0
+    params["extra_decode_length"] = 1
     params["beam_size"] = 3
     params["dtype"] = tf.float32
 
@@ -96,7 +70,6 @@ class TransformerV2Test(tf.test.TestCase):
       # print ('model params', _count_params_model(model))
       print ('model params', _count_params(model))
 
-
   if not is_train:
     if get_weights_flag:
       def test_a_get_weights_eval(self):
@@ -113,6 +86,33 @@ class TransformerV2Test(tf.test.TestCase):
       model.set_weights(w_eval)
       model([inputs], training=False)
 
+
+def _count_params(layer, trainable_only=True):
+  """Returns the count of all model parameters, or just trainable ones."""
+  if not trainable_only:
+    return layer.count_params()
+  else:
+    return int(
+        np.sum([
+            tf.keras.backend.count_params(p) for p in layer.trainable_weights
+        ]))
+
+
+# def _count_params_model(model_name):
+#   total_parameters = 0
+#   for variable in model_name.trainable_variables:
+#       # shape is an array of tf.Dimension
+#       shape = variable.get_shape()
+#       # print(shape)
+#       # print(len(shape))
+#       variable_parameters = 1
+#       for dim in shape:
+#           # print(dim)
+#           variable_parameters *= dim
+#       # print(variable_parameters)
+#       total_parameters += variable_parameters
+#   print(total_parameters)
+#   return total_parameters
 
 
 if __name__ == "__main__":
