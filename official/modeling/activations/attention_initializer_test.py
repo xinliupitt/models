@@ -28,10 +28,15 @@ from official.nlp.modeling import layers
 class AttentionInitializerTest(keras_parameterized.TestCase):
 
   def test_attention_initializer(self):
-    query_dense_layer = layers.DenseEinsum(
+    hidden_size = 8
+    dense_layer = layers.DenseEinsum(
         output_shape=(2, 4),
-        kernel_initializer=attention_initializer.attention_initializer(16))
-    weights = query_dense_layer._kernel
+        kernel_initializer=attention_initializer.attention_initializer(
+          hidden_size))
+
+    input_tensor = tf.keras.Input(shape=(None, 1, hidden_size))
+    dense_layer(input_tensor)
+    weights = dense_layer._kernel
     print ('weights', weights)
 
 if __name__ == '__main__':
