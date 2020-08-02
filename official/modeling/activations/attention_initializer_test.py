@@ -12,26 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Gaussian error linear unit."""
+"""Tests for attention initializer."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import math
-
 import tensorflow as tf
 
+from tensorflow.python.keras import keras_parameterized  # pylint: disable=g-direct-tensorflow-import
+from official.modeling import activations
 
-@tf.keras.utils.register_keras_serializable(package='Text')
-def attention_initializer(hidden_size):
-  """Weight Initializer of Attention Layer in Seq2Seq Transformer.
 
-  Args:
-    hidden_size: hidden size of input tensor
+@keras_parameterized.run_all_keras_modes
+class AttentionInitializerTest(keras_parameterized.TestCase):
 
-  Returns:
-    Tensor of initialized weights based on hidden size
-  """
-  limit = math.sqrt(6.0 / (hidden_size + hidden_size))
-  return tf.keras.initializers.RandomUniform(minval=-limit, maxval=limit)
+  def test_attention_initializer(self):
+    initialized_weights = activations.attention_initializer(32)
+    print ('attention weights', initialized_weights)
+
+
+if __name__ == '__main__':
+  tf.test.main()
