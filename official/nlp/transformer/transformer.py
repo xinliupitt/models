@@ -201,17 +201,17 @@ class Transformer(tf.keras.Model):
         inputs_padding = model_utils.get_padding(inputs)
         attention_bias = tf.cast(attention_bias, self.params["dtype"])
         ## Method 1:
-        attention_mask = tf.cast(tf.not_equal(inputs, 0), self.params["dtype"])
-        attention_mask = layers.SelfAttentionMask()([embedded_inputs, attention_mask])
+        # attention_mask = tf.cast(tf.not_equal(inputs, 0), self.params["dtype"])
+        # attention_mask = layers.SelfAttentionMask()([embedded_inputs, attention_mask])
 
         ## Method 2:
-        # input_shape = tf_utils.get_shape_list(inputs, expected_rank=2)
-        # attention_mask = tf.cast(
-        #     tf.reshape(tf.not_equal(inputs, 0), [input_shape[0], 1, input_shape[1]]),
-        #     dtype=inputs.dtype)
-        # broadcast_ones = tf.ones(
-        #     shape=[input_shape[0], input_shape[1], 1], dtype=inputs.dtype)
-        # attention_mask = broadcast_ones * attention_mask
+        input_shape = tf_utils.get_shape_list(inputs, expected_rank=2)
+        attention_mask = tf.cast(
+            tf.reshape(tf.not_equal(inputs, 0), [input_shape[0], 1, input_shape[1]]),
+            dtype=inputs.dtype)
+        broadcast_ones = tf.ones(
+            shape=[input_shape[0], input_shape[1], 1], dtype=inputs.dtype)
+        attention_mask = broadcast_ones * attention_mask
 
 
         with tf.name_scope("add_pos_encoding"):
