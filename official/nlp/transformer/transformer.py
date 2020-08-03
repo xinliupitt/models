@@ -173,7 +173,64 @@ class Transformer(tf.keras.Model):
 
       # Run the inputs through the encoder layer to map the symbol
       # representations to continuous representations.
-      encoder_outputs = self.encode(inputs, attention_bias, training)
+
+      with tf.name_scope("encode"):
+        # Prepare inputs to the layer stack by adding positional encodings and
+        # applying dropout.
+        if not workon_new:
+          embedded_inputs = self.embedding_softmax_layer(inputs)
+          try:
+            w_layer = self.embedding_softmax_layer.get_weights()
+            # save('w_layer.npy', w_layer)
+            # print ("layer weights saved!")
+          except:
+            pass
+        else:
+          try:
+            w_layer = load('w_layer.npy', allow_pickle=True)
+            # self.embedding_lookup.set_weights(w_layer)
+            # print ('layer weight loaded successfully!')
+          except:
+            pass
+          embedded_inputs = self.embedding_lookup(inputs)
+          embedding_mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
+          embedded_inputs *= tf.expand_dims(embedding_mask, -1)
+        print ("new?", workon_new)
+        print ('embedded_inputs', embedded_inputs)
+        embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
+        inputs_padding = model_utils.get_padding(inputs)
+        attention_bias = tf.cast(attention_bias, self.params["dtype"])
+        ## Method 1:
+        attention_mask = tf.cast(tf.not_equal(inputs, 0), self.params["dtype"])
+        attention_mask = layers.SelfAttentionMask()([embedded_inputs, attention_mask])
+
+        ## Method 2:
+        # input_shape = tf_utils.get_shape_list(inputs, expected_rank=2)
+        # attention_mask = tf.cast(
+        #     tf.reshape(tf.not_equal(inputs, 0), [input_shape[0], 1, input_shape[1]]),
+        #     dtype=inputs.dtype)
+        # broadcast_ones = tf.ones(
+        #     shape=[input_shape[0], input_shape[1], 1], dtype=inputs.dtype)
+        # attention_mask = broadcast_ones * attention_mask
+
+
+        with tf.name_scope("add_pos_encoding"):
+          pos_encoding = self.position_embedding(inputs=embedded_inputs)
+          pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
+          encoder_inputs = embedded_inputs + pos_encoding
+
+        if training:
+          pass
+          # encoder_inputs = tf.nn.dropout(
+          #     encoder_inputs, rate=self.params["layer_postprocess_dropout"])
+
+        if not workon_new:
+          encoder_outputs = self.encoder_stack(
+            encoder_inputs, attention_bias, inputs_padding, training=False)
+        else:
+          encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
+        print ("new encoder params count", self._count_params(self.encoder_layer))
+
       # Generate output sequence if targets is None, or return logits if target
       # sequence is known.
 
@@ -227,20 +284,19 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("encode"):
       # Prepare inputs to the layer stack by adding positional encodings and
       # applying dropout.
-      print ('inputs', inputs)
       if not workon_new:
         embedded_inputs = self.embedding_softmax_layer(inputs)
         try:
           w_layer = self.embedding_softmax_layer.get_weights()
-          save('w_layer.npy', w_layer)
-          print ("layer weights saved!")
+          # save('w_layer.npy', w_layer)
+          # print ("layer weights saved!")
         except:
           pass
       else:
         try:
           w_layer = load('w_layer.npy', allow_pickle=True)
           # self.embedding_lookup.set_weights(w_layer)
-          print ('layer weight loaded successfully!')
+          # print ('layer weight loaded successfully!')
         except:
           pass
         embedded_inputs = self.embedding_lookup(inputs)
