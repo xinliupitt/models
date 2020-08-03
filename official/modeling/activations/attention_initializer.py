@@ -31,7 +31,7 @@ def attention_initializer(hidden_size):
     hidden_size: hidden size of input tensor
 
   Returns:
-    Tensor of initialized weights based on hidden size
+    Initialized weights based on hidden size
   """
   limit = math.sqrt(6.0 / (hidden_size + hidden_size))
   return tf.keras.initializers.RandomUniform(minval=-limit, maxval=limit)
