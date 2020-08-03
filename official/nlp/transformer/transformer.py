@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = False
+workon_new = True
 
 import numpy as np
 from numpy import load
@@ -169,7 +169,9 @@ class Transformer(tf.keras.Model):
     with tf.name_scope("Transformer"):
       # Calculate attention bias for encoder self-attention and decoder
       # multi-headed attention layers.
+      print ('input', inputs)
       attention_bias = model_utils.get_padding_bias(inputs)
+      print ('original attention bias', attention_bias)
 
       # Run the inputs through the encoder layer to map the symbol
       # representations to continuous representations.
@@ -328,7 +330,9 @@ class Transformer(tf.keras.Model):
         decoder_length = decoder_shape[1]
 
         attention_bias = self._bias_convert(attention_bias)
+        print ('convert step 1', attention_bias)
         attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+        print ('convert step 2', attention_mask)
         decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
             length, dtype=self.params["dtype"])
         decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
