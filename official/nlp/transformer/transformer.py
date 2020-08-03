@@ -242,7 +242,79 @@ class Transformer(tf.keras.Model):
       if targets is None:
         return self.predict(encoder_outputs, attention_bias, training)
       else:
-        logits = self.decode(targets, encoder_outputs, attention_bias, training)
+
+        with tf.name_scope("decode"):
+          # Prepare inputs to decoder layers by shifting targets, adding positional
+          # encoding and applying dropout.
+          if not workon_new:
+            decoder_inputs = self.embedding_softmax_layer(targets)
+          else:
+            decoder_inputs = self.embedding_lookup(targets)
+            embedding_mask = tf.cast(tf.not_equal(targets, 0), self.embedding_lookup.embeddings.dtype)
+            decoder_inputs *= tf.expand_dims(embedding_mask, -1)
+          decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
+          attention_bias = tf.cast(attention_bias, self.params["dtype"])
+          with tf.name_scope("shift_targets"):
+            # Shift targets to the right, and remove the last element
+            decoder_inputs = tf.pad(decoder_inputs,
+                                    [[0, 0], [1, 0], [0, 0]])[:, :-1, :]
+          with tf.name_scope("add_pos_encoding"):
+            length = tf.shape(decoder_inputs)[1]
+            pos_encoding = self.position_embedding(decoder_inputs)
+            pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
+            decoder_inputs += pos_encoding
+          if training:
+            pass
+            # decoder_inputs = tf.nn.dropout(
+            #     decoder_inputs, rate=self.params["layer_postprocess_dropout"])
+
+
+          if not workon_new:
+            decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
+                length, dtype=self.params["dtype"])
+            # print ('old decoder_inputs', decoder_inputs)
+            # print ('old encoder_outputs', encoder_outputs)
+            outputs = self.decoder_stack(
+                decoder_inputs,
+                encoder_outputs,
+                decoder_self_attention_bias,
+                attention_bias,
+                training=False)
+          else:
+            decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
+            batch_size = decoder_shape[0]
+            decoder_length = decoder_shape[1]
+
+
+
+            # decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
+            #     length, dtype=self.params["dtype"])
+            # print ('original self attention bias', decoder_self_attention_bias)
+            # decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
+            # print ('convert step 1', decoder_self_attention_bias)
+            # self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
+            # print ('convert step 2', self_attention_mask)
+
+
+            self_attention_mask = tf.linalg.band_part(tf.ones([length, length], dtype=tf.float32), -1, 0)
+            self_attention_mask = tf.reshape(self_attention_mask, [1, length, length])
+            self_attention_mask = tf.tile(self_attention_mask, [batch_size, 1, 1])
+
+
+
+            outputs = self.decoder_layer(
+                decoder_inputs,
+                encoder_outputs,
+                self_attention_mask,
+                attention_mask)
+
+          print ("new decoder params count", self._count_params(self.decoder_layer))
+          if not workon_new:
+            logits = self.embedding_softmax_layer(outputs, mode="linear")
+          else:
+            logits = embedding_linear(self.embedding_lookup.embeddings, outputs)
+          logits = tf.cast(logits, tf.float32)
+
         print ('New?', workon_new)
         print ('decoder output', logits)
         return logits
