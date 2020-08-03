@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = False
+workon_new = True
 
 import numpy as np
 from numpy import load
@@ -196,8 +196,7 @@ class Transformer(tf.keras.Model):
           embedded_inputs = self.embedding_lookup(inputs)
           embedding_mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
           embedded_inputs *= tf.expand_dims(embedding_mask, -1)
-        # print ("new?", workon_new)
-        # print ('embedded_inputs', embedded_inputs)
+
         embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
         inputs_padding = model_utils.get_padding(inputs)
         attention_bias = tf.cast(attention_bias, self.params["dtype"])
@@ -233,11 +232,6 @@ class Transformer(tf.keras.Model):
                                                attention_mask=attention_mask)
         print ("new encoder params count", self._count_params(self.encoder_layer))
 
-      # Generate output sequence if targets is None, or return logits if target
-      # sequence is known.
-
-      # print ('New?', workon_new)
-      # print ('encoder_outputs', encoder_outputs)
 
       if targets is None:
         return self.predict(encoder_outputs, attention_bias, training)
@@ -410,8 +404,8 @@ class Transformer(tf.keras.Model):
         decoder_outputs = self.decoder_layer(
             decoder_input,
             cache.get("encoder_outputs"),
-            self_attention_mask,
-            attention_mask,
+            memory_mask=self_attention_mask,
+            target_mask=attention_mask,
             cache=cache,
             decode_loop_step=i if self.params["padded_decode"] else None)
       else:
@@ -855,11 +849,10 @@ class TransformerDecoder(tf.keras.layers.Layer):
     }
 
   def call(self,
-           decoder_inputs,
+           target,
            encoder_outputs,
-           decoder_self_attention_bias,
-           attention_bias,
-           # training,
+           memory_mask=None,
+           target_mask=None,
            cache=None,
            decode_loop_step=None):
     """Return the output of the decoder layer stacks.
@@ -890,13 +883,11 @@ class TransformerDecoder(tf.keras.layers.Layer):
     if not isinstance(encoder_outputs, list):
       encoder_outputs = [encoder_outputs]
 
-    output_tensor = decoder_inputs
-    self_attention_mask = decoder_self_attention_bias
-    attention_mask = attention_bias
+    output_tensor = target
     for layer_idx in range(self.params["num_hidden_layers"]):
       memory = encoder_outputs[-1]
       transformer_inputs = [
-          output_tensor, memory, attention_mask, self_attention_mask
+          output_tensor, memory, target_mask, memory_mask
       ]
       # Gets the cache for decoding.
       if cache is None:
