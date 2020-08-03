@@ -290,7 +290,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                                        [self._num_heads, self._key_size]),
         bias_axes=bias_axes if self._use_bias else None,
         name="query",
-        kernel_initializer=attention_initializer,
+        kernel_initializer=output_initializer,
         **common_kwargs)
     einsum_equation, bias_axes, output_rank = _build_proj_equation(
         key_shape.rank - 1, bound_dims=1, output_dims=2)
@@ -300,7 +300,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                                        [self._num_heads, self._key_size]),
         bias_axes=bias_axes if self._use_bias else None,
         name="key",
-        kernel_initializer=attention_initializer,
+        kernel_initializer=output_initializer,
         **common_kwargs)
     einsum_equation, bias_axes, output_rank = _build_proj_equation(
         value_shape.rank - 1, bound_dims=1, output_dims=2)
@@ -310,7 +310,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                                        [self._num_heads, self._value_size]),
         bias_axes=bias_axes if self._use_bias else None,
         name="value",
-        kernel_initializer=attention_initializer,
+        kernel_initializer=output_initializer,
         **common_kwargs)
 
     # Builds the attention computations for multi-head dot product attention.
