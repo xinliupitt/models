@@ -299,8 +299,8 @@ class Transformer(tf.keras.Model):
             outputs = self.decoder_layer(
                 decoder_inputs,
                 encoder_outputs,
-                self_attention_mask,
-                attention_mask)
+                memory_mask=self_attention_mask,
+                target_mask=attention_mask)
 
           print ("new decoder params count", self._count_params(self.decoder_layer))
           if not workon_new:
