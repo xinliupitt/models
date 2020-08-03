@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Gaussian error linear unit."""
+"""Attention Layer Initializer."""
 
 from __future__ import absolute_import
 from __future__ import division
