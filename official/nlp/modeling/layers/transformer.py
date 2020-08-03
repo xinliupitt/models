@@ -52,8 +52,8 @@ class Transformer(tf.keras.layers.Layer):
     use_bias: Whether to enable use_bias in attention layer. If set False,
       use_bias in attention layer is disabled.
     norm_first: Whether to normalize inputs to attention and intermediate dense
-      layers. If set False, output of attention and intermediate dense layers
-      is normalized.
+      layers. If set False, output of attention and intermediate dense layers is
+      normalized.
     norm_epsilon: Epsilon value to initialize normalization layers.
   """
 
@@ -132,12 +132,6 @@ class Transformer(tf.keras.layers.Layer):
         use_bias=self._use_bias,
         name="self_attention",
         **common_kwargs)
-    # pylint: disable=protected-access
-    # Temporarily handling for checkpoint compatible changes.
-    self._attention_layer._build_from_signature(
-        query=input_tensor_shape, value=input_tensor_shape)
-    self._attention_output_dense = self._attention_layer._output_dense
-    # pylint: enable=protected-access
     self._attention_dropout = tf.keras.layers.Dropout(rate=self._dropout_rate)
     # Use float32 in layernorm for numeric stability.
     # It is probably safe in mixed_float16, but we haven't validated this yet.
@@ -170,7 +164,9 @@ class Transformer(tf.keras.layers.Layer):
     self._output_dropout = tf.keras.layers.Dropout(rate=self._dropout_rate)
     # Use float32 in layernorm for numeric stability.
     self._output_layer_norm = tf.keras.layers.LayerNormalization(
-        name="output_layer_norm", axis=-1, epsilon=self._norm_epsilon,
+        name="output_layer_norm",
+        axis=-1,
+        epsilon=self._norm_epsilon,
         dtype=tf.float32)
 
     super(Transformer, self).build(input_shape)
@@ -292,8 +288,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     use_bias: Whether to enable use_bias in attention layer. If set False,
       use_bias in attention layer is disabled.
     norm_first: Whether to normalize inputs to attention and intermediate dense
-      layers. If set False, output of attention and intermediate dense layers
-      is normalized.
+      layers. If set False, output of attention and intermediate dense layers is
+      normalized.
     norm_epsilon: Epsilon value to initialize normalization layers.
   """
 
@@ -376,7 +372,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     self.self_attention_layer_norm = (
         tf.keras.layers.LayerNormalization(
             name="self_attention_layer_norm",
-            axis=-1, epsilon=self._norm_epsilon))
+            axis=-1,
+            epsilon=self._norm_epsilon))
     # Encoder-decoder attention.
     self.encdec_attention = self._cross_attention_cls(
         num_heads=self.num_attention_heads,
@@ -392,7 +389,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     self.encdec_attention_layer_norm = (
         tf.keras.layers.LayerNormalization(
             name="attention/encdec_output_layer_norm",
-            axis=-1, epsilon=self._norm_epsilon))
+            axis=-1,
+            epsilon=self._norm_epsilon))
 
     # Feed-forward projection.
     self.intermediate_dense = tf.keras.layers.experimental.EinsumDense(
@@ -452,7 +450,6 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     base_config = super(TransformerDecoderLayer, self).get_config()
     return dict(list(base_config.items()) + list(config.items()))
 
-
   def common_layers_with_encoder(self):
     """Gets layer objects that can make a Transformer encoder block."""
     return [
@@ -503,8 +500,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
       attention_output = source_self_attention_output + attention_output
     else:
       attention_output = self.encdec_attention_layer_norm(
-          self_attention_output +
-          attention_output)
+          self_attention_output + attention_output)
     if self._norm_first:
       source_attention_output = attention_output
       attention_output = self.output_layer_norm(attention_output)

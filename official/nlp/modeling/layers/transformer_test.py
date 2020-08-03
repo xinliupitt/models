@@ -152,10 +152,8 @@ class TransformerLayerTest(keras_parameterized.TestCase):
     _ = new_layer([input_data, mask_data])
     new_layer.set_weights(test_layer.get_weights())
     new_output_tensor = new_layer([input_data, mask_data])
-    self.assertAllClose(new_output_tensor,
-                        output_tensor[:, 0:1, :],
-                        atol=5e-5,
-                        rtol=0.003)
+    self.assertAllClose(
+        new_output_tensor, output_tensor[:, 0:1, :], atol=5e-5, rtol=0.003)
 
   def test_layer_invocation_with_float16_dtype(self, transformer_cls):
     tf.keras.mixed_precision.experimental.set_policy('mixed_float16')
@@ -221,7 +219,7 @@ class TransformerLayerTest(keras_parameterized.TestCase):
 @keras_parameterized.run_all_keras_modes
 class TransformerArgumentTest(keras_parameterized.TestCase):
 
-  def test_use_bias(self):
+  def test_use_bias_norm_first(self):
     num_attention_heads = 2
     hidden_size = 16
     encoder_block = transformer.Transformer(
@@ -256,6 +254,7 @@ class TransformerArgumentTest(keras_parameterized.TestCase):
         encoder_block_config)
     self.assertEqual(encoder_block_config, new_encoder_block.get_config())
 
+
 def _create_cache(batch_size, init_decode_length, num_heads, head_size):
   return {
       'key':
@@ -289,7 +288,7 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
     self.assertEqual(output.shape, (2, 4, hidden_size))
     self.assertEqual(cache['value'].shape, (2, 4, 2, 8))
 
-  def test_use_bias(self):
+  def test_use_bias_norm_first(self):
     num_attention_heads = 2
     hidden_size = 16
     decoder_block = transformer.TransformerDecoderLayer(
@@ -323,6 +322,7 @@ class TransformerDecoderLayerTest(keras_parameterized.TestCase):
     new_decoder_block = transformer.TransformerDecoderLayer.from_config(
         decoder_block_config)
     self.assertEqual(decoder_block_config, new_decoder_block.get_config())
+
 
 if __name__ == '__main__':
   tf.test.main()
