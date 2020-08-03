@@ -171,7 +171,6 @@ class Transformer(tf.keras.Model):
       # multi-headed attention layers.
       print ('input', inputs)
       attention_bias = model_utils.get_padding_bias(inputs)
-      print ('original attention bias', attention_bias)
 
       # Run the inputs through the encoder layer to map the symbol
       # representations to continuous representations.
@@ -330,13 +329,16 @@ class Transformer(tf.keras.Model):
         decoder_length = decoder_shape[1]
 
         attention_bias = self._bias_convert(attention_bias)
-        print ('convert step 1', attention_bias)
+        # print ('convert step 1', attention_bias)
         attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
-        print ('convert step 2', attention_mask)
+        # print ('convert step 2', attention_mask)
         decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
             length, dtype=self.params["dtype"])
+        print ('original self attention bias', decoder_self_attention_bias)
         decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
+        print ('convert step 1', decoder_self_attention_bias)
         self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
+        print ('convert step 2', self_attention_mask)
         # print ('new decoder_inputs', decoder_inputs)
         # print ('new encoder_outputs', encoder_outputs)
         outputs = self.decoder_layer(
