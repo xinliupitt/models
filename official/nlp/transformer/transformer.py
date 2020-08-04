@@ -128,7 +128,17 @@ class Transformer(tf.keras.Model):
         norm_epsilon=1e-6,
         intermediate_dropout=0.0)
     self.decoder_stack = DecoderStack(params)
-    self.decoder_layer = TransformerDecoder(params)
+    self.decoder_layer = TransformerDecoder(
+        num_layers=self.params["num_hidden_layers"],
+        num_attention_heads=self.params["num_heads"],
+        intermediate_size=self.params["filter_size"],
+        activation="relu",
+        dropout_rate=0.0,
+        attention_dropout_rate=0.0,
+        use_bias=False,
+        norm_first=True,
+        norm_epsilon=1e-6,
+        intermediate_dropout=0.0)
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
 
@@ -866,25 +876,44 @@ class TransformerDecoder(tf.keras.layers.Layer):
     3. Feedforward network (2 fully-connected layers)
   """
 
-  def __init__(self, params):
+  def __init__(self,
+               num_layers=6,
+               num_attention_heads=8,
+               intermediate_size=2048,
+               activation="relu",
+               dropout_rate=0.0,
+               attention_dropout_rate=0.0,
+               use_bias=False,
+               norm_first=True,
+               norm_epsilon=1e-6,
+               intermediate_dropout=0.0):
     super(TransformerDecoder, self).__init__()
-    self.params = params
+    self._num_layers = num_layers
+    self._num_attention_heads = num_attention_heads
+    self._intermediate_size = intermediate_size
+    self._activation = activation
+    self._dropout_rate = dropout_rate
+    self._attention_dropout_rate = attention_dropout_rate
+    self._use_bias = use_bias
+    self._norm_first = norm_first
+    self._norm_epsilon = norm_epsilon
+    self._intermediate_dropout = intermediate_dropout
 
   def build(self, unused_input_shapes):
     """Implements build() for the layer."""
     self.decoder_layers = []
-    for i in range(self.params["num_hidden_layers"]):
+    for i in range(self._num_layers):
       self.decoder_layers.append(
           transformer.TransformerDecoderLayer(
-              num_attention_heads=self.params["num_heads"],
-              intermediate_size=self.params["filter_size"],
-              intermediate_activation="relu",
-              dropout_rate=0.0,
-              attention_dropout_rate=0.0,
-              use_bias=False,
-              norm_first=True,
-              norm_epsilon=1e-6,
-              intermediate_dropout=0.0,
+              num_attention_heads=self._num_attention_heads,
+              intermediate_size=self._intermediate_size,
+              intermediate_activation=self._activation,
+              dropout_rate=self._dropout_rate,
+              attention_dropout_rate=self._attention_dropout_rate,
+              use_bias=self._use_bias,
+              norm_first=self._norm_first,
+              norm_epsilon=self._norm_epsilon,
+              intermediate_dropout=self._intermediate_dropout,
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=1e-6, dtype="float32")
@@ -892,7 +921,26 @@ class TransformerDecoder(tf.keras.layers.Layer):
 
   def get_config(self):
     return {
-        "params": self.params,
+        "num_layers":
+            self._num_layers,
+         "num_attention_heads":
+            self._num_attention_heads,
+         "intermediate_size":
+            self._intermediate_size,
+         "activation":
+            self._activation,
+         "dropout_rate":
+            self._dropout_rate,
+         "attention_dropout_rate":
+            self._attention_dropout_rate,
+         "use_bias":
+            self._use_bias,
+         "norm_first":
+            self._norm_first,
+         "norm_epsilon":
+            self._norm_epsilon,
+         "intermediate_dropout":
+            self._intermediate_dropout
     }
 
   def call(self,
@@ -929,7 +977,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
     """
 
     output_tensor = target
-    for layer_idx in range(self.params["num_hidden_layers"]):
+    for layer_idx in range(self._num_layers):
       transformer_inputs = [
           output_tensor, memory, target_mask, memory_mask
       ]
