@@ -41,7 +41,7 @@ class TransformerV2Test(tf.test.TestCase):
     params["filter_size"] = 14
     params["num_heads"] = 2
     params["vocab_size"] = 41
-    params["extra_decode_length"] = 1
+    params["extra_decode_length"] = 2
     params["beam_size"] = 3
     params["dtype"] = tf.float32
 
@@ -81,7 +81,7 @@ class TransformerV2Test(tf.test.TestCase):
     def test_create_model_not_train(self):
       model = transformer.create_model(self.params, False)
       # inputs = np.asarray([[5, 2, 1], [7, 5, 2], [1, 4, 9], [7, 5, 11]])
-      inputs = np.asarray([[5], [7], [1], [7]])
+      inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
       w_eval = load('w_eval.npy', allow_pickle=True)
       model.set_weights(w_eval)
       model([inputs], training=False)
