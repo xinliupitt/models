@@ -55,10 +55,7 @@ class Transformer(tf.keras.layers.Layer):
       layers. If set False, output of attention and intermediate dense layers is
       normalized.
     norm_epsilon: Epsilon value to initialize normalization layers.
-    intermediate_dropout: Dropout probability for intermediate_dropout_layer. If
-      larger than 0.0, intermediate_dropout_layer is created and used after
-      intermediate_activation_layer. Otherwise, intermediate_dropout_layer is
-      None.
+    intermediate_dropout: Dropout probability for intermediate_dropout_layer.
   """
 
   def __init__(self,
@@ -161,11 +158,8 @@ class Transformer(tf.keras.layers.Layer):
       policy = tf.float32
     self._intermediate_activation_layer = tf.keras.layers.Activation(
         self._intermediate_activation, dtype=policy)
-    if self._intermediate_dropout > 0.0:
-      self.intermediate_dropout_layer = tf.keras.layers.Dropout(
-          rate=self._intermediate_dropout)
-    else:
-      self.intermediate_dropout_layer = None
+    self._intermediate_dropout_layer = tf.keras.layers.Dropout(
+        rate=self._intermediate_dropout)
     self._output_dense = tf.keras.layers.experimental.EinsumDense(
         "abc,cd->abd",
         output_shape=(None, hidden_size),
@@ -251,8 +245,7 @@ class Transformer(tf.keras.layers.Layer):
     intermediate_output = self._intermediate_dense(attention_output)
     intermediate_output = self._intermediate_activation_layer(
         intermediate_output)
-    if self.intermediate_dropout_layer:
-      intermediate_output = self.intermediate_dropout_layer(intermediate_output)
+    intermediate_output = self._intermediate_dropout_layer(intermediate_output)
     layer_output = self._output_dense(intermediate_output)
     layer_output = self._output_dropout(layer_output)
     # During mixed precision training, attention_output is from layer norm and
@@ -306,10 +299,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
       layers. If set False, output of attention and intermediate dense layers is
       normalized.
     norm_epsilon: Epsilon value to initialize normalization layers.
-    intermediate_dropout: Dropout probability for intermediate_dropout_layer. If
-      larger than 0.0, intermediate_dropout_layer is created and used after
-      intermediate_activation_layer. Otherwise, intermediate_dropout_layer is
-      None.
+    intermediate_dropout: Dropout probability for intermediate_dropout_layer.
   """
 
   def __init__(self,
@@ -422,11 +412,8 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         **common_kwargs)
     self.intermediate_activation_layer = tf.keras.layers.Activation(
         self.intermediate_activation)
-    if self._intermediate_dropout > 0.0:
-      self.intermediate_dropout_layer = tf.keras.layers.Dropout(
-          rate=self._intermediate_dropout)
-    else:
-      self.intermediate_dropout_layer = None
+    self._intermediate_dropout_layer = tf.keras.layers.Dropout(
+        rate=self._intermediate_dropout)
     self.output_dense = tf.keras.layers.experimental.EinsumDense(
         "abc,cd->abd",
         output_shape=(None, hidden_size),
@@ -536,8 +523,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     intermediate_output = self.intermediate_dense(attention_output)
     intermediate_output = self.intermediate_activation_layer(
         intermediate_output)
-    if self.intermediate_dropout_layer:
-      intermediate_output = self.intermediate_dropout_layer(intermediate_output)
+    intermediate_output = self._intermediate_dropout_layer(intermediate_output)
     layer_output = self.output_dense(intermediate_output)
     layer_output = self.output_dropout(layer_output)
     if self._norm_first:
