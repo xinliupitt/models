@@ -439,7 +439,7 @@ class TransformerTask(object):
         checkpoint.restore(
           init_weight_path).assert_existing_objects_matched().expect_partial()
       else:
-        model.load_weights(init_weight_path)
+        model.load_weights(init_weight_path).expect_partial()
     else:
       logging.info("Weights not loaded from path:{}".format(init_weight_path))
 
