@@ -126,7 +126,7 @@ class Transformer(tf.keras.Model):
         use_bias=False,
         norm_first=True,
         norm_epsilon=1e-6,
-        intermediate_dropout=self.params[""])
+        intermediate_dropout=0.0)
     self.decoder_stack = DecoderStack(params)
     self.decoder_layer = TransformerDecoder(params)
     self.position_embedding = position_embedding.RelativePositionEmbedding(
