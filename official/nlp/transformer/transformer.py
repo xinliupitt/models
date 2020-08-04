@@ -897,7 +897,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
 
   def call(self,
            target,
-           encoder_outputs,
+           memory,
            memory_mask=None,
            target_mask=None,
            cache=None,
@@ -927,12 +927,9 @@ class TransformerDecoder(tf.keras.layers.Layer):
       Output of decoder layer stack.
       float32 tensor with shape [batch_size, target_length, hidden_size]
     """
-    if not isinstance(encoder_outputs, list):
-      encoder_outputs = [encoder_outputs]
 
     output_tensor = target
     for layer_idx in range(self.params["num_hidden_layers"]):
-      memory = encoder_outputs[-1]
       transformer_inputs = [
           output_tensor, memory, target_mask, memory_mask
       ]
