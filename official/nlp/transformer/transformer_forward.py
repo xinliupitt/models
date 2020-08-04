@@ -64,8 +64,6 @@ class TransformerV2Test(tf.test.TestCase):
       print ('Model begins!')
       model([inputs, targets], training=True)
 
-      # print ('w[0]', w[0])
-      # print ('weight count', len(w))
       # print ("new params count", len(model.trainable_variables))
       # print ('model params', _count_params_model(model))
       print ('model params', _count_params(model))
