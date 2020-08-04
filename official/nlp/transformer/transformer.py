@@ -740,7 +740,7 @@ class TransformerEncoder(tf.keras.layers.Layer):
       Output of decoder layer stack.
       float32 tensor with shape [batch_size, target_length, hidden_size]
     """
-    for layer_idx in range(self.params["num_hidden_layers"]):
+    for layer_idx in range(self._num_layers):
       encoder_inputs = self.encoder_layers[layer_idx]([encoder_inputs, attention_mask])
 
     output_tensor = encoder_inputs
