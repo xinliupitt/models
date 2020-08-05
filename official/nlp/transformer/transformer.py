@@ -495,11 +495,21 @@ class Transformer(tf.keras.Model):
         batch_size = decoder_shape[0]
         decoder_length = decoder_shape[1]
 
-        attention_bias = self._bias_convert(cache.get("encoder_decoder_attention_bias"))
-        attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+        # attention_bias = self._bias_convert(cache.get("encoder_decoder_attention_bias"))
+        # attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
 
-        self_attention_bias = self._bias_convert(self_attention_bias)
-        self_attention_mask = self._to_bert_self_attention_mask(self_attention_bias, batch_size)
+        attention_bias = cache.get("encoder_decoder_attention_bias")
+        attention_bias = tf.where(attention_bias < 0, tf.zeros_like(attention_bias), tf.ones_like(attention_bias))
+        attention_bias = tf.squeeze(attention_bias, axis=[1])
+        attention_mask = tf.tile(attention_bias, [1, decoder_length, 1])
+
+        # self_attention_bias = self._bias_convert(self_attention_bias)
+        # self_attention_mask = self._to_bert_self_attention_mask(self_attention_bias, batch_size)
+
+        self_attention_bias = tf.where(self_attention_bias < 0, tf.zeros_like(self_attention_bias), tf.ones_like(self_attention_bias))
+        self_attention_bias = tf.squeeze(self_attention_bias, axis=[1])
+        self_attention_mask = tf.tile(self_attention_bias, [batch_size, 1, 1])
+
         decoder_outputs = self.decoder_layer(
             decoder_input,
             cache.get("encoder_outputs"),
