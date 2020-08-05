@@ -523,8 +523,10 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     intermediate_output = self.intermediate_dense(attention_output)
     intermediate_output = self.intermediate_activation_layer(
         intermediate_output)
+    print ('output after intermediate_dense', intermediate_output)
     intermediate_output = self._intermediate_dropout_layer(intermediate_output)
     layer_output = self.output_dense(intermediate_output)
+    print ('output after output_dense', layer_output)
     layer_output = self.output_dropout(layer_output)
     if self._norm_first:
       layer_output = source_attention_output + layer_output
