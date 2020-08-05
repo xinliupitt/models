@@ -141,6 +141,8 @@ class Transformer(tf.keras.Model):
         intermediate_dropout=0.0)
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
+    self.dropout_layer = tf.keras.layers.Dropout(rate=self.params["layer_postprocess_dropout"])
+    # self.dropout_layer = tf.keras.layers.Dropout(rate=0.0)
 
   def get_config(self):
     return {
@@ -243,6 +245,10 @@ class Transformer(tf.keras.Model):
           pass
           # encoder_inputs = tf.nn.dropout(
           #     encoder_inputs, rate=self.params["layer_postprocess_dropout"])
+
+        print ('encoder_inputs before', encoder_inputs)
+        encoder_inputs = self.dropout_layer(encoder_inputs)
+        print ('encoder_inputs after', encoder_inputs)
 
         if not workon_new:
           encoder_outputs = self.encoder_stack(
@@ -367,6 +373,9 @@ class Transformer(tf.keras.Model):
             # decoder_inputs = tf.nn.dropout(
             #     decoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
+          print ('decoder_inputs before', decoder_inputs)
+          decoder_inputs = self.dropout_layer(decoder_inputs)
+          print ('decoder_inputs after', decoder_inputs)
 
           if not workon_new:
             decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
