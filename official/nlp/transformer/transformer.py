@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = False
+workon_new = True
 
 import numpy as np
 from numpy import load
@@ -391,9 +391,12 @@ class Transformer(tf.keras.Model):
             batch_size = decoder_shape[0]
             decoder_length = decoder_shape[1]
 
-            print ('attention bias', attention_bias)
+
             attention_bias = self._bias_convert(attention_bias)
-            attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+            print ('attention_bias', attention_bias)
+            attention_bias = tf.squeeze(attention_bias, axis=[1])
+            print ('after squeeze', attention_bias)
+            attention_mask = tf.tile(attention_bias, [1, decoder_length, 1])
             print ('encdec attention mask', attention_mask)
 
             self_attention_mask = tf.linalg.band_part(tf.ones([length, length], dtype=tf.float32), -1, 0)
