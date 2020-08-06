@@ -783,6 +783,7 @@ class TransformerEncoder(tf.keras.layers.Layer):
     self._intermediate_dropout = intermediate_dropout
 
   def build(self, unused_input_shapes):
+    print ('encoder input shape', unused_input_shapes)
     """Implements build() for the layer."""
     self.encoder_layers = []
     for i in range(self._num_layers):
@@ -1004,6 +1005,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
     self._intermediate_dropout = intermediate_dropout
 
   def build(self, unused_input_shapes):
+    print ('decoder input shape', unused_input_shapes)
     """Implements build() for the layer."""
     self.decoder_layers = []
     for i in range(self._num_layers):
