@@ -308,6 +308,11 @@ class Transformer(tf.keras.Model):
           self_attention_mask = tf.reshape(self_attention_mask, [1, length, length])
           self_attention_mask = tf.tile(self_attention_mask, [batch_size, 1, 1])
 
+          attention_mask = tf.cast(
+              tf.expand_dims(tf.not_equal(inputs, 0), axis=1),
+              dtype=inputs.dtype)
+          attention_mask = tf.tile(attention_mask, [1, decoder_length, 1])
+
           outputs = self.decoder_layer(
               decoder_inputs,
               encoder_outputs,
