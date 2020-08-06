@@ -400,7 +400,7 @@ class Transformer(tf.keras.Model):
             # print ('encdec attention mask', attention_mask)
 
             attention_mask = tf.cast(
-                tf.reshape(tf.not_equal(inputs, 0), [batch_size, 1, decoder_length]),
+                tf.expand_dims(tf.not_equal(inputs, 0), axis=1),
                 dtype=inputs.dtype)
 
             attention_mask = tf.tile(attention_mask, [1, decoder_length, 1])
