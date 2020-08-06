@@ -392,12 +392,19 @@ class Transformer(tf.keras.Model):
             decoder_length = decoder_shape[1]
 
 
-            attention_bias = self._bias_convert(attention_bias)
-            print ('attention_bias', attention_bias)
-            attention_bias = tf.squeeze(attention_bias, axis=[1])
-            print ('after squeeze', attention_bias)
-            attention_mask = tf.tile(attention_bias, [1, decoder_length, 1])
-            print ('encdec attention mask', attention_mask)
+            # attention_bias = self._bias_convert(attention_bias)
+            # print ('attention_bias', attention_bias)
+            # attention_bias = tf.squeeze(attention_bias, axis=[1])
+            # print ('after squeeze', attention_bias)
+            # attention_mask = tf.tile(attention_bias, [1, decoder_length, 1])
+            # print ('encdec attention mask', attention_mask)
+
+            attention_mask = tf.cast(
+                tf.reshape(tf.not_equal(inputs, 0), [batch_size, 1, decoder_length]),
+                dtype=inputs.dtype)
+
+            attention_mask = tf.tile(attention_mask, [1, decoder_length, 1])
+
 
             self_attention_mask = tf.linalg.band_part(tf.ones([length, length], dtype=tf.float32), -1, 0)
             self_attention_mask = tf.reshape(self_attention_mask, [1, length, length])
