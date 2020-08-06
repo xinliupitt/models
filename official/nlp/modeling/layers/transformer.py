@@ -76,6 +76,7 @@ class Transformer(tf.keras.layers.Layer):
                norm_first=False,
                norm_epsilon=1e-12,
                intermediate_dropout=0.0,
+               attention_initializer=None,
                **kwargs):
     super(Transformer, self).__init__(**kwargs)
 
@@ -96,6 +97,7 @@ class Transformer(tf.keras.layers.Layer):
     self._norm_first = norm_first
     self._norm_epsilon = norm_epsilon
     self._intermediate_dropout = intermediate_dropout
+    self._attention_initializer = attention_initializer
 
   def build(self, input_shape):
     input_tensor = input_shape[0] if len(input_shape) == 2 else input_shape
@@ -133,6 +135,7 @@ class Transformer(tf.keras.layers.Layer):
         key_size=self._attention_head_size,
         dropout=self._attention_dropout_rate,
         use_bias=self._use_bias,
+        attention_initializer=self._attention_initializer,
         name="self_attention",
         **common_kwargs)
     self._attention_dropout = tf.keras.layers.Dropout(rate=self._dropout_rate)
@@ -320,6 +323,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
                norm_first=False,
                norm_epsilon=1e-12,
                intermediate_dropout=0.0,
+               attention_initializer=None,
                **kwargs):
     super(TransformerDecoderLayer, self).__init__(**kwargs)
     self.num_attention_heads = num_attention_heads
@@ -340,6 +344,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     self._norm_first = norm_first
     self._norm_epsilon = norm_epsilon
     self._intermediate_dropout = intermediate_dropout
+    self._attention_initializer = attention_initializer
     if self.multi_channel_cross_attention:
       self._cross_attention_cls = multi_channel_attention.MultiChannelAttention
     else:
@@ -370,6 +375,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         key_size=self.attention_head_size,
         dropout=self.attention_dropout_rate,
         use_bias=self._use_bias,
+        attention_initializer=self._attention_initializer,
         name="self_attention",
         **common_kwargs)
     self.self_attention_output_dense = tf.keras.layers.experimental.EinsumDense(
@@ -392,6 +398,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
         dropout=self.attention_dropout_rate,
         output_shape=hidden_size,
         use_bias=self._use_bias,
+        attention_initializer=self._attention_initializer,
         name="attention/encdec",
         **common_kwargs)
 

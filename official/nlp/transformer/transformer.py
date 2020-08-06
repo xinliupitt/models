@@ -25,6 +25,7 @@ import numpy as np
 
 import tensorflow as tf
 from official.modeling import tf_utils
+from official.modeling.activations import attention_initializer
 from official.nlp.modeling import layers
 from official.nlp.modeling.layers import position_embedding
 from official.nlp.modeling.layers import transformer
@@ -627,7 +628,7 @@ class TransformerEncoder(tf.keras.layers.Layer):
     self._norm_epsilon = norm_epsilon
     self._intermediate_dropout = intermediate_dropout
 
-  def build(self, unused_input_shapes):
+  def build(self, input_shape):
     """Implements build() for the layer."""
     self.encoder_layers = []
     for i in range(self._num_layers):
@@ -642,10 +643,12 @@ class TransformerEncoder(tf.keras.layers.Layer):
               norm_first=self._norm_first,
               norm_epsilon=self._norm_epsilon,
               intermediate_dropout=self._intermediate_dropout,
+              attention_initializer=attention_initializer.attention_initializer(
+                  input_shape[2]),
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=self._norm_epsilon, dtype="float32")
-    super(TransformerEncoder, self).build(unused_input_shapes)
+    super(TransformerEncoder, self).build(input_shape)
 
   def get_config(self):
     return {
@@ -738,7 +741,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
     self._norm_epsilon = norm_epsilon
     self._intermediate_dropout = intermediate_dropout
 
-  def build(self, unused_input_shapes):
+  def build(self, input_shape):
     """Implements build() for the layer."""
     self.decoder_layers = []
     for i in range(self._num_layers):
@@ -753,10 +756,12 @@ class TransformerDecoder(tf.keras.layers.Layer):
               norm_first=self._norm_first,
               norm_epsilon=self._norm_epsilon,
               intermediate_dropout=self._intermediate_dropout,
+              attention_initializer=attention_initializer.attention_initializer(
+                  input_shape[2]),
               name=("layer_%d" % i)))
     self.output_normalization = tf.keras.layers.LayerNormalization(
         epsilon=1e-6, dtype="float32")
-    super(TransformerDecoder, self).build(unused_input_shapes)
+    super(TransformerDecoder, self).build(input_shape)
 
   def get_config(self):
     return {

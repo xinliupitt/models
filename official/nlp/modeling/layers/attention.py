@@ -201,6 +201,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                activity_regularizer=None,
                kernel_constraint=None,
                bias_constraint=None,
+               attention_initializer=None,
                **kwargs):
     super(MultiHeadAttention, self).__init__(**kwargs)
     self._num_heads = num_heads
@@ -216,6 +217,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     self._bias_regularizer = tf.keras.regularizers.get(bias_regularizer)
     self._kernel_constraint = tf.keras.constraints.get(kernel_constraint)
     self._bias_constraint = tf.keras.constraints.get(bias_constraint)
+    self._attention_initializer = attention_initializer
     if attention_axes is not None and not isinstance(attention_axes,
                                                      collections.abc.Sized):
       self._attention_axes = (attention_axes,)
@@ -285,20 +287,16 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     else:
       key_shape = key
 
-    hidden_size = query_shape[2]
-    def _glorot_initializer(fan_in, fan_out):
-      limit = math.sqrt(6.0 / (fan_in + fan_out))
-      return tf.keras.initializers.RandomUniform(minval=-limit, maxval=limit)
-    output_initializer = _glorot_initializer(hidden_size, hidden_size)
-
     common_kwargs = dict(
-        kernel_initializer=output_initializer,
+        kernel_initializer=self._kernel_initializer,
         bias_initializer=self._bias_initializer,
         kernel_regularizer=self._kernel_regularizer,
         bias_regularizer=self._bias_regularizer,
         activity_regularizer=self._activity_regularizer,
         kernel_constraint=self._kernel_constraint,
         bias_constraint=self._bias_constraint)
+    if self._attention_initializer:
+      common_kwargs["kernel_initializer"] = self._attention_initializer
     with tf.init_scope():
       free_dims = query_shape.rank - 1
       einsum_equation, bias_axes, output_rank = _build_proj_equation(
