@@ -27,8 +27,8 @@ import tensorflow as tf
 from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
-is_train = False
-get_weights_flag = False
+is_train = True
+get_weights_flag = True
 
 class TransformerV2Test(tf.test.TestCase):
 
@@ -55,7 +55,7 @@ class TransformerV2Test(tf.test.TestCase):
     def test_create_model_train(self):
       model = transformer.create_model(self.params, True)
       inputs = np.asarray([[5, 2, 1], [7, 5, 0], [1, 4, 0], [7, 5, 11]])
-      targets = np.asarray([[4, 3, 0], [13, 19, 17], [20, 14, 1], [5, 7, 0]])
+      targets = np.asarray([[4, 3, 4, 0], [13, 19, 17, 8], [20, 14, 1, 2], [5, 7, 3, 0]])
       # inputs = np.asarray([[5, 2, 1], [7, 5, 2], [1, 4, 9], [7, 5, 11]])
       # targets = np.asarray([[4, 3, 5], [13, 19, 17], [20, 14, 1], [5, 7, 8]])
       w = load('w.npy', allow_pickle=True)

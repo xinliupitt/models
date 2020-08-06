@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-workon_new = True
+workon_new = False
 
 import numpy as np
 from numpy import load
@@ -390,6 +390,11 @@ class Transformer(tf.keras.Model):
             decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
             batch_size = decoder_shape[0]
             decoder_length = decoder_shape[1]
+
+            print ('attention bias', attention_bias)
+            attention_bias = self._bias_convert(attention_bias)
+            attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
+            print ('encdec attention mask', attention_mask)
 
             self_attention_mask = tf.linalg.band_part(tf.ones([length, length], dtype=tf.float32), -1, 0)
             self_attention_mask = tf.reshape(self_attention_mask, [1, length, length])
