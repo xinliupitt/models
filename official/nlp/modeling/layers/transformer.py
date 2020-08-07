@@ -100,7 +100,7 @@ class Transformer(tf.keras.layers.Layer):
     self._norm_epsilon = norm_epsilon
     self._intermediate_dropout = intermediate_dropout
     if attention_initializer:
-      self._attention_initializer = attention_initializer
+      self._attention_initializer = tf.keras.initializers.get(attention_initializer)
     else:
       self._attention_initializer = self._kernel_initializer
 
@@ -355,7 +355,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     self._norm_epsilon = norm_epsilon
     self._intermediate_dropout = intermediate_dropout
     if attention_initializer:
-      self._attention_initializer = attention_initializer
+      self._attention_initializer = tf.keras.initializers.get(attention_initializer)
     else:
       self._attention_initializer = self._kernel_initializer
     if self.multi_channel_cross_attention:
