@@ -21,8 +21,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import numpy as np
-
 import tensorflow as tf
 from official.modeling import tf_utils
 from official.modeling.activations import attention_initializer
@@ -30,9 +28,6 @@ from official.nlp.modeling import layers
 from official.nlp.modeling.layers import position_embedding
 from official.nlp.modeling.layers import transformer
 from official.nlp.modeling.ops import beam_search
-from official.nlp.transformer import attention_layer
-from official.nlp.transformer import embedding_layer
-from official.nlp.transformer import ffn_layer
 from official.nlp.transformer import metrics
 from official.nlp.transformer import model_utils
 from official.nlp.transformer.utils.tokenizer import EOS_ID
@@ -325,128 +320,6 @@ class Transformer(tf.keras.Model):
 
         return logits
 
-  def _bias_convert(self, bias):
-    return tf.where(bias < 0, tf.zeros_like(bias), tf.ones_like(bias))
-
-  def _to_bert_self_attention_mask(self, matrix, batch_size):
-    """[1, 1, target_len, target_len] -> [bs, target_len, target_len]."""
-    matrix = tf.squeeze(matrix, axis=[1])
-    matrix = tf.tile(matrix, [batch_size, 1, 1])
-    return matrix
-
-  def _to_bert_encdec_attention_mask(self, matrix, decoder_length):
-    """[bs, 1, 1, input_len] -> [bs, target_len, input_len]."""
-    matrix = tf.squeeze(matrix, axis=[1])
-    matrix = tf.tile(matrix, [1, decoder_length, 1])
-    return matrix
-
-  def encode(self, inputs, attention_bias, training):
-    """Generate continuous representation for inputs.
-
-    Args:
-      inputs: int tensor with shape [batch_size, input_length].
-      attention_bias: float tensor with shape [batch_size, 1, 1, input_length].
-      training: boolean, whether in training mode or not.
-
-    Returns:
-      float tensor with shape [batch_size, input_length, hidden_size]
-    """
-    with tf.name_scope("encode"):
-      # Prepare inputs to the layer stack by adding positional encodings and
-      # applying dropout.
-      # embedded_inputs = self.embedding_softmax_layer(inputs)
-      embedded_inputs = self.embedding_lookup(inputs)
-      embedding_mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
-      embedded_inputs *= tf.expand_dims(embedding_mask, -1)
-      embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
-      inputs_padding = model_utils.get_padding(inputs)
-      attention_bias = tf.cast(attention_bias, self.params["dtype"])
-      attention_mask = tf.cast(tf.not_equal(inputs, 0), self.params["dtype"])
-      attention_mask = layers.SelfAttentionMask()([embedded_inputs, attention_mask])
-
-      with tf.name_scope("add_pos_encoding"):
-        pos_encoding = self.position_embedding(inputs=embedded_inputs)
-        pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
-        encoder_inputs = embedded_inputs + pos_encoding
-
-      if training:
-        encoder_inputs = tf.nn.dropout(
-            encoder_inputs, rate=self.params["layer_postprocess_dropout"])
-
-      encoder_outputs = self.encoder_layer(encoder_inputs, attention_mask)
-
-      return encoder_outputs
-
-  def decode(self, targets, encoder_outputs, attention_bias, training):
-    """Generate logits for each value in the target sequence.
-
-    Args:
-      targets: target values for the output sequence. int tensor with shape
-        [batch_size, target_length]
-      encoder_outputs: continuous representation of input sequence. float tensor
-        with shape [batch_size, input_length, hidden_size]
-      attention_bias: float tensor with shape [batch_size, 1, 1, input_length]
-      training: boolean, whether in training mode or not.
-
-    Returns:
-      float32 tensor with shape [batch_size, target_length, vocab_size]
-    """
-    with tf.name_scope("decode"):
-      # Prepare inputs to decoder layers by shifting targets, adding positional
-      # encoding and applying dropout.
-      # decoder_inputs = self.embedding_softmax_layer(targets)
-      decoder_inputs = self.embedding_lookup(targets)
-      embedding_mask = tf.cast(tf.not_equal(targets, 0), self.embedding_lookup.embeddings.dtype)
-      decoder_inputs *= tf.expand_dims(embedding_mask, -1)
-      decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
-      attention_bias = tf.cast(attention_bias, self.params["dtype"])
-      with tf.name_scope("shift_targets"):
-        # Shift targets to the right, and remove the last element
-        decoder_inputs = tf.pad(decoder_inputs,
-                                [[0, 0], [1, 0], [0, 0]])[:, :-1, :]
-      with tf.name_scope("add_pos_encoding"):
-        length = tf.shape(decoder_inputs)[1]
-        pos_encoding = self.position_embedding(decoder_inputs)
-        pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
-        decoder_inputs += pos_encoding
-      if training:
-        decoder_inputs = tf.nn.dropout(
-            decoder_inputs, rate=self.params["layer_postprocess_dropout"])
-
-      cache = None
-      decode_loop_step = None
-
-      decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
-      batch_size = decoder_shape[0]
-      decoder_length = decoder_shape[1]
-
-      attention_bias = self._bias_convert(attention_bias)
-      attention_mask = self._to_bert_encdec_attention_mask(attention_bias, decoder_length)
-      decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
-          length, dtype=self.params["dtype"])
-      decoder_self_attention_bias = self._bias_convert(decoder_self_attention_bias)
-      self_attention_mask = self._to_bert_self_attention_mask(decoder_self_attention_bias, batch_size)
-
-
-
-      # outputs = self.decoder_stack(
-      #     decoder_inputs,
-      #     encoder_outputs,
-      #     decoder_self_attention_bias,
-      #     attention_bias,
-      #     training=training)
-      output_tensor = decoder_inputs
-
-      outputs = self.decoder_layer(
-          decoder_inputs,
-          encoder_outputs,
-          self_attention_mask,
-          attention_mask)
-
-      # logits = self.embedding_softmax_layer(outputs, mode="linear")
-      logits = embedding_linear(self.embedding_lookup.embeddings, outputs)
-      logits = tf.cast(logits, tf.float32)
-      return logits
 
   def _get_symbols_to_logits_fn(self, max_decode_length, training):
     """Returns a decoding function that calculates logits of the next tokens."""
