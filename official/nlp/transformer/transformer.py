@@ -128,8 +128,10 @@ class Transformer(tf.keras.Model):
         intermediate_dropout=self.params["relu_dropout"])
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
-    self.encoder_dropout = tf.keras.layers.Dropout(rate=self.params["layer_postprocess_dropout"])
-    self.decoder_dropout = tf.keras.layers.Dropout(rate=self.params["layer_postprocess_dropout"])
+    self.encoder_dropout = tf.keras.layers.Dropout(
+        rate=self.params["layer_postprocess_dropout"])
+    self.decoder_dropout = tf.keras.layers.Dropout(
+        rate=self.params["layer_postprocess_dropout"])
 
   def get_config(self):
     return {
@@ -180,14 +182,16 @@ class Transformer(tf.keras.Model):
         # Prepare inputs to the layer stack by adding positional encodings and
         # applying dropout.
         embedded_inputs = self.embedding_lookup(inputs)
-        embedding_mask = tf.cast(tf.not_equal(inputs, 0), self.embedding_lookup.embeddings.dtype)
+        embedding_mask = tf.cast(tf.not_equal(inputs, 0),
+                                 self.embedding_lookup.embeddings.dtype)
         embedded_inputs *= tf.expand_dims(embedding_mask, -1)
         embedded_inputs = tf.cast(embedded_inputs, self.params["dtype"])
 
         # Attention_mask generation.
         input_shape = tf_utils.get_shape_list(inputs, expected_rank=2)
         attention_mask = tf.cast(
-            tf.reshape(tf.not_equal(inputs, 0), [input_shape[0], 1, input_shape[1]]),
+            tf.reshape(tf.not_equal(inputs, 0),
+                       [input_shape[0], 1, input_shape[1]]),
             dtype=inputs.dtype)
         broadcast_ones = tf.ones(
             shape=[input_shape[0], input_shape[1], 1], dtype=inputs.dtype)
@@ -224,7 +228,7 @@ class Transformer(tf.keras.Model):
         symbols_to_logits_fn = self._get_symbols_to_logits_fn(
             max_decode_length, training)
 
-        # Create initial set of IDs that will be passed into symbols_to_logits_fn.
+        # Create initial set of IDs that will be passed to symbols_to_logits_fn.
         initial_ids = tf.zeros([batch_size], dtype=tf.int32)
 
         # Create cache storing decoder attention values for each layer.
@@ -275,10 +279,10 @@ class Transformer(tf.keras.Model):
         return {"outputs": top_decoded_ids, "scores": top_scores}
 
       else:
-        # logits = self.decode(targets, encoder_outputs, attention_bias, training)
         with tf.name_scope("decode"):
           decoder_inputs = self.embedding_lookup(targets)
-          embedding_mask = tf.cast(tf.not_equal(targets, 0), self.embedding_lookup.embeddings.dtype)
+          embedding_mask = tf.cast(tf.not_equal(targets, 0),
+                                   self.embedding_lookup.embeddings.dtype)
           decoder_inputs *= tf.expand_dims(embedding_mask, -1)
           decoder_inputs = tf.cast(decoder_inputs, self.params["dtype"])
           with tf.name_scope("shift_targets"):
@@ -297,12 +301,15 @@ class Transformer(tf.keras.Model):
 
           decoder_inputs = self.decoder_dropout(decoder_inputs)
 
-          decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
+          decoder_shape = tf_utils.get_shape_list(decoder_inputs,
+                                                  expected_rank=3)
           batch_size = decoder_shape[0]
           decoder_length = decoder_shape[1]
 
-          self_attention_mask = tf.linalg.band_part(tf.ones([length, length], dtype=tf.float32), -1, 0)
-          self_attention_mask = tf.reshape(self_attention_mask, [1, length, length])
+          self_attention_mask = tf.linalg.band_part(
+              tf.ones([length, length], dtype=tf.float32), -1, 0)
+          self_attention_mask = tf.reshape(self_attention_mask,
+                                           [1, length, length])
           self_attention_mask = tf.tile(self_attention_mask, [batch_size, 1, 1])
 
           attention_mask = tf.cast(
@@ -351,7 +358,8 @@ class Transformer(tf.keras.Model):
       # decoder_input = self.embedding_softmax_layer(decoder_input)
       source_decoder_input = decoder_input
       decoder_input = self.embedding_lookup(decoder_input)
-      embedding_mask = tf.cast(tf.not_equal(source_decoder_input, 0), self.embedding_lookup.embeddings.dtype)
+      embedding_mask = tf.cast(tf.not_equal(source_decoder_input, 0),
+                               self.embedding_lookup.embeddings.dtype)
       decoder_input *= tf.expand_dims(embedding_mask, -1)
 
       if self.params["padded_decode"]:
@@ -373,22 +381,18 @@ class Transformer(tf.keras.Model):
       decoder_length = decoder_shape[1]
 
       attention_bias = cache.get("encoder_decoder_attention_bias")
-      attention_bias = tf.where(attention_bias < 0, tf.zeros_like(attention_bias), tf.ones_like(attention_bias))
+      attention_bias = tf.where(attention_bias < 0,
+                                tf.zeros_like(attention_bias),
+                                tf.ones_like(attention_bias))
       attention_bias = tf.squeeze(attention_bias, axis=[1])
       attention_mask = tf.tile(attention_bias, [1, decoder_length, 1])
 
-      self_attention_bias = tf.where(self_attention_bias < 0, tf.zeros_like(self_attention_bias), tf.ones_like(self_attention_bias))
+      self_attention_bias = tf.where(self_attention_bias < 0,
+                                     tf.zeros_like(self_attention_bias),
+                                     tf.ones_like(self_attention_bias))
       self_attention_bias = tf.squeeze(self_attention_bias, axis=[1])
       self_attention_mask = tf.tile(self_attention_bias, [batch_size, 1, 1])
 
-      # decoder_outputs = self.decoder_stack(
-      #     decoder_input,
-      #     cache.get("encoder_outputs"),
-      #     self_attention_bias,
-      #     cache.get("encoder_decoder_attention_bias"),
-      #     training=training,
-      #     cache=cache,
-      #     decode_loop_step=i if self.params["padded_decode"] else None)
 
       decoder_outputs = self.decoder_layer(
           decoder_input,
@@ -398,8 +402,8 @@ class Transformer(tf.keras.Model):
           cache=cache,
           decode_loop_step=i if self.params["padded_decode"] else None)
 
-      # logits = self.embedding_softmax_layer(decoder_outputs, mode="linear")
-      logits = embedding_linear(self.embedding_lookup.embeddings, decoder_outputs)
+      logits = embedding_linear(self.embedding_lookup.embeddings,
+                                decoder_outputs)
       logits = tf.squeeze(logits, axis=[1])
       return logits, cache
 
@@ -575,7 +579,8 @@ class TransformerEncoder(tf.keras.layers.Layer):
       float32 tensor with shape [batch_size, target_length, hidden_size]
     """
     for layer_idx in range(self._num_layers):
-      encoder_inputs = self.encoder_layers[layer_idx]([encoder_inputs, attention_mask])
+      encoder_inputs = self.encoder_layers[layer_idx](
+          [encoder_inputs, attention_mask])
 
     output_tensor = encoder_inputs
     output_tensor = self.output_normalization(output_tensor)
