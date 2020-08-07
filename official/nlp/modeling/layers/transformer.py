@@ -57,7 +57,7 @@ class Transformer(tf.keras.layers.Layer):
     norm_epsilon: Epsilon value to initialize normalization layers.
     intermediate_dropout: Dropout probability for intermediate_dropout_layer.
     attention_initializer: Initializer for kernels of attention layers. If set
-      `None`, attention layers use kernel_initializer as initializer for kernels.
+      `None`, attention layers use kernel_initializer as initializer for kernel.
   """
 
   def __init__(self,
@@ -312,7 +312,7 @@ class TransformerDecoderLayer(tf.keras.layers.Layer):
     norm_epsilon: Epsilon value to initialize normalization layers.
     intermediate_dropout: Dropout probability for intermediate_dropout_layer.
     attention_initializer: Initializer for kernels of attention layers. If set
-      `None`, attention layers use kernel_initializer as initializer for kernels.
+      `None`, attention layers use kernel_initializer as initializer for kernel.
   """
 
   def __init__(self,
