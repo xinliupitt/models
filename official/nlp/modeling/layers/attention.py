@@ -201,7 +201,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
                activity_regularizer=None,
                kernel_constraint=None,
                bias_constraint=None,
-               attention_initializer=None,
                **kwargs):
     super(MultiHeadAttention, self).__init__(**kwargs)
     self._num_heads = num_heads
@@ -217,7 +216,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     self._bias_regularizer = tf.keras.regularizers.get(bias_regularizer)
     self._kernel_constraint = tf.keras.constraints.get(kernel_constraint)
     self._bias_constraint = tf.keras.constraints.get(bias_constraint)
-    self._attention_initializer = attention_initializer
     if attention_axes is not None and not isinstance(attention_axes,
                                                      collections.abc.Sized):
       self._attention_axes = (attention_axes,)
@@ -295,8 +293,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         activity_regularizer=self._activity_regularizer,
         kernel_constraint=self._kernel_constraint,
         bias_constraint=self._bias_constraint)
-    if self._attention_initializer:
-      common_kwargs["kernel_initializer"] = self._attention_initializer
     with tf.init_scope():
       free_dims = query_shape.rank - 1
       einsum_equation, bias_axes, output_rank = _build_proj_equation(
@@ -366,7 +362,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
     norm_axes = tuple(
         range(attn_scores_rank - len(self._attention_axes), attn_scores_rank))
     self._masked_softmax = masked_softmax.MaskedSoftmax(
-        mask_expansion_axes=[1], normalization_axes=norm_axes)
+        mask_expansion_axes=[-len(self._attention_axes) * 2 - 1],
+        normalization_axes=norm_axes)
     self._dropout_layer = tf.keras.layers.Dropout(rate=self._dropout)
 
   def compute_attention(self, query, key, value, attention_mask=None):
