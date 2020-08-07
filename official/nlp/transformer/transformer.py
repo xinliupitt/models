@@ -133,7 +133,8 @@ class Transformer(tf.keras.Model):
         intermediate_dropout=self.params["relu_dropout"])
     self.position_embedding = position_embedding.RelativePositionEmbedding(
         hidden_size=self.params["hidden_size"])
-    # self.dropout_layer = tf.keras.layers.Dropout(rate=self.params["layer_postprocess_dropout"])
+    self.encoder_dropout = tf.keras.layers.Dropout(rate=self.params["layer_postprocess_dropout"])
+    self.decoder_dropout = tf.keras.layers.Dropout(rate=self.params["layer_postprocess_dropout"])
 
   def get_config(self):
     return {
@@ -202,11 +203,11 @@ class Transformer(tf.keras.Model):
           pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
           encoder_inputs = embedded_inputs + pos_encoding
 
-        if training:
-          encoder_inputs = tf.nn.dropout(
-              encoder_inputs, rate=self.params["layer_postprocess_dropout"])
+        # if training:
+        #   encoder_inputs = tf.nn.dropout(
+        #       encoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
-        # encoder_inputs = self.dropout_layer(encoder_inputs)
+        encoder_inputs = self.encoder_dropout(encoder_inputs)
 
         encoder_outputs = self.encoder_layer(encoder_inputs,
                                              attention_mask=attention_mask)
@@ -295,11 +296,11 @@ class Transformer(tf.keras.Model):
             pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
             decoder_inputs += pos_encoding
 
-          if training:
-            decoder_inputs = tf.nn.dropout(
-                decoder_inputs, rate=self.params["layer_postprocess_dropout"])
+          # if training:
+          #   decoder_inputs = tf.nn.dropout(
+          #       decoder_inputs, rate=self.params["layer_postprocess_dropout"])
 
-          # decoder_inputs = self.dropout_layer(decoder_inputs)
+          decoder_inputs = self.decoder_dropout(decoder_inputs)
 
           decoder_shape = tf_utils.get_shape_list(decoder_inputs, expected_rank=3)
           batch_size = decoder_shape[0]
