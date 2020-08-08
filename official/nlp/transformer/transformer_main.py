@@ -201,23 +201,12 @@ class TransformerTask(object):
       opt = self._create_optimizer()
 
       current_step = 0
-      # checkpoint = tf.train.Checkpoint(model=model, optimizer=opt)
-      # latest_checkpoint = tf.train.latest_checkpoint(flags_obj.model_dir)
-      # if latest_checkpoint:
-      #   checkpoint.restore(latest_checkpoint)
-      #   logging.info("Loaded checkpoint %s", latest_checkpoint)
-      #   current_step = opt.iterations.numpy()
-
-      model.global_step = opt.iterations
       checkpoint = tf.train.Checkpoint(model=model, optimizer=opt)
-      checkpoint_manager = tf.train.CheckpointManager(
-          checkpoint,
-          directory=flags_obj.model_dir,
-          max_to_keep=10,
-          step_counter=model.global_step)
-      if checkpoint_manager.restore_or_initialize():
-        logging.info("Training restored from the checkpoints in: %s",
-                     flags_obj.model_dir)
+      latest_checkpoint = tf.train.latest_checkpoint(flags_obj.model_dir)
+      if latest_checkpoint:
+        checkpoint.restore(latest_checkpoint)
+        logging.info("Loaded checkpoint %s", latest_checkpoint)
+        current_step = opt.iterations.numpy()
 
       if params["use_ctl"]:
         train_loss_metric = tf.keras.metrics.Mean(
@@ -435,11 +424,9 @@ class TransformerTask(object):
       if self.use_tpu:
         checkpoint = tf.train.Checkpoint(
             model=model, optimizer=self._create_optimizer())
-        # checkpoint.restore(init_weight_path)
-        checkpoint.restore(
-          init_weight_path).assert_existing_objects_matched().expect_partial()
+        checkpoint.restore(init_weight_path)
       else:
-        model.load_weights(init_weight_path).expect_partial()
+        model.load_weights(init_weight_path)
     else:
       logging.info("Weights not loaded from path:{}".format(init_weight_path))
 
