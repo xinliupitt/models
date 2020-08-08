@@ -27,7 +27,6 @@ from official.modeling.activations import attention_initializer
 from official.nlp.modeling import layers
 from official.nlp.modeling.layers import position_embedding
 from official.nlp.modeling.layers import transformer
-from official.nlp.modeling.models import seq2seq_transformer
 from official.nlp.modeling.ops import beam_search
 from official.nlp.transformer import metrics
 from official.nlp.transformer import model_utils
@@ -38,50 +37,8 @@ from official.nlp.transformer.utils.tokenizer import EOS_ID
 # callable when they actually are.
 # pylint: disable=not-callable
 
-
-def create_model(params, is_train):
-  """Creates transformer model."""
-  with tf.name_scope("model"):
-    if is_train:
-      inputs = tf.keras.layers.Input((None,), dtype="int64", name="inputs")
-      targets = tf.keras.layers.Input((None,), dtype="int64", name="targets")
-      internal_model = seq2seq_transformer.Seq2SeqTransformer(
-          params, name="transformer_v2")
-      logits = internal_model([inputs, targets], training=is_train)
-      vocab_size = params["vocab_size"]
-      label_smoothing = params["label_smoothing"]
-      if params["enable_metrics_in_training"]:
-        logits = metrics.MetricLayer(vocab_size)([logits, targets])
-      logits = tf.keras.layers.Lambda(lambda x: x, name="logits",
-                                      dtype=tf.float32)(logits)
-      model = tf.keras.Model([inputs, targets], logits)
-      loss = metrics.transformer_loss(
-          logits, targets, label_smoothing, vocab_size)
-      model.add_loss(loss)
-      return model
-
-    else:
-      inputs = tf.keras.layers.Input((None,), dtype="int64", name="inputs")
-      internal_model = seq2seq_transformer.Seq2SeqTransformer(
-          params, name="transformer_v2")
-      ret = internal_model([inputs], training=is_train)
-      outputs, scores = ret["outputs"], ret["scores"]
-      return tf.keras.Model(inputs, [outputs, scores])
-
-def embedding_linear(embedding_matrix, x):
-  """Uses embeddings as linear transformation weights."""
-  with tf.name_scope("presoftmax_linear"):
-    batch_size = tf.shape(x)[0]
-    length = tf.shape(x)[1]
-    hidden_size = tf.shape(x)[2]
-    vocab_size = tf.shape(embedding_matrix)[0]
-
-    x = tf.reshape(x, [-1, hidden_size])
-    logits = tf.matmul(x, embedding_matrix, transpose_b=True)
-
-    return tf.reshape(logits, [batch_size, length, vocab_size])
-
-class Transformer(tf.keras.Model):
+@tf.keras.utils.register_keras_serializable(package="Text")
+class Seq2SeqTransformer(tf.keras.Model):
   """Transformer model with Keras.
 
   Implemented as described in: https://arxiv.org/pdf/1706.03762.pdf
@@ -99,7 +56,7 @@ class Transformer(tf.keras.Model):
       params: hyperparameter object defining layer sizes, dropout values, etc.
       name: name of the model.
     """
-    super(Transformer, self).__init__(name=name)
+    super(Seq2SeqTransformer, self).__init__(name=name)
     self.params = params
     self.embedding_lookup = layers.OnDeviceEmbedding(
         vocab_size=params["vocab_size"],
@@ -715,3 +672,17 @@ class TransformerDecoder(tf.keras.layers.Layer):
             cache=cache[cache_layer_idx],
             decode_loop_step=decode_loop_step)
     return self.output_normalization(output_tensor)
+
+
+def embedding_linear(embedding_matrix, x):
+  """Uses embeddings as linear transformation weights."""
+  with tf.name_scope("presoftmax_linear"):
+    batch_size = tf.shape(x)[0]
+    length = tf.shape(x)[1]
+    hidden_size = tf.shape(x)[2]
+    vocab_size = tf.shape(embedding_matrix)[0]
+
+    x = tf.reshape(x, [-1, hidden_size])
+    logits = tf.matmul(x, embedding_matrix, transpose_b=True)
+
+    return tf.reshape(logits, [batch_size, length, vocab_size])
