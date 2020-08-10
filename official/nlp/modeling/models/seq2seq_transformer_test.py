@@ -67,7 +67,11 @@ class TransformerV2Test(tf.test.TestCase):
     params["dtype"] = tf.float32
 
   def test_create_model_train(self):
-    model = create_model(self.params, True)
+    inputs = tf.keras.layers.Input((None,), dtype="int64", name="inputs")
+    targets = tf.keras.layers.Input((None,), dtype="int64", name="targets")
+    internal_model = seq2seq_transformer.Seq2SeqTransformer(self.params, name="transformer_v2")
+    logits = internal_model([inputs, targets], training=True)
+    model = tf.keras.Model([inputs, targets], logits)
     inputs, outputs = model.inputs, model.outputs
     self.assertEqual(len(inputs), 2)
     self.assertEqual(len(outputs), 1)
