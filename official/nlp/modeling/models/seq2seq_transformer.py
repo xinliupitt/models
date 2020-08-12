@@ -53,7 +53,7 @@ def create_model(params, is_train):
       norm_epsilon=1e-6,
       intermediate_dropout=params["relu_dropout"])
   encoder_layer = TransformerEncoder(**common_kwargs)
-  decoder_layer = TransformerEncoder(**common_kwargs)
+  decoder_layer = TransformerDecoder(**common_kwargs)
 
   with tf.name_scope("model"):
     if is_train:
