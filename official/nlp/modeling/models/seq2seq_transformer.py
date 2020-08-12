@@ -1,4 +1,4 @@
-# Copyright 2018 The TensorFlow Authors. All Rights Reserved.
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Defines the Transformer model in TF 2.0.
+"""Implement Seq2Seq Transformer model by TF official NLP library.
 
 Model paper: https://arxiv.org/pdf/1706.03762.pdf
-Transformer model code source: https://github.com/tensorflow/tensor2tensor
+TF official NLP library:
+  https://github.com/tensorflow/models/tree/master/official/nlp/modeling
 """
 import math
 
@@ -37,7 +38,7 @@ from official.nlp.transformer.utils.tokenizer import EOS_ID
 def create_model(params, is_train):
   """Creates transformer model."""
 
-  common_kwargs = dict(
+  encdec_kwargs = dict(
       num_layers=params["num_hidden_layers"],
       num_attention_heads=params["num_heads"],
       intermediate_size=params["filter_size"],
@@ -48,14 +49,10 @@ def create_model(params, is_train):
       norm_first=True,
       norm_epsilon=1e-6,
       intermediate_dropout=params["relu_dropout"])
-  encoder_layer = TransformerEncoder(**common_kwargs)
-  decoder_layer = TransformerDecoder(**common_kwargs)
+  encoder_layer = TransformerEncoder(**encdec_kwargs)
+  decoder_layer = TransformerDecoder(**encdec_kwargs)
 
-  with tf.name_scope("model"):
-    if is_train:
-      inputs = tf.keras.layers.Input((None,), dtype="int64", name="inputs")
-      targets = tf.keras.layers.Input((None,), dtype="int64", name="targets")
-      internal_model = Seq2SeqTransformer(
+  model_kwargs = dict(
           vocab_size=params["vocab_size"],
           hidden_size=params["hidden_size"],
           dropout_rate=params["layer_postprocess_dropout"],
@@ -72,6 +69,12 @@ def create_model(params, is_train):
           encoder_layer=encoder_layer,
           decoder_layer=decoder_layer,
           name="transformer_v2")
+
+  with tf.name_scope("model"):
+    if is_train:
+      inputs = tf.keras.layers.Input((None,), dtype="int64", name="inputs")
+      targets = tf.keras.layers.Input((None,), dtype="int64", name="targets")
+      internal_model = Seq2SeqTransformer(**model_kwargs)
       logits = internal_model([inputs, targets], training=is_train)
       vocab_size = params["vocab_size"]
       label_smoothing = params["label_smoothing"]
@@ -87,23 +90,7 @@ def create_model(params, is_train):
 
     else:
       inputs = tf.keras.layers.Input((None,), dtype="int64", name="inputs")
-      internal_model = Seq2SeqTransformer(
-          vocab_size=params["vocab_size"],
-          hidden_size=params["hidden_size"],
-          dropout_rate=params["layer_postprocess_dropout"],
-          padded_decode=params["padded_decode"],
-          num_replicas=params["num_replicas"],
-          decode_batch_size=params["decode_batch_size"],
-          decode_max_length=params["decode_max_length"],
-          dtype=params["dtype"],
-          extra_decode_length=params["extra_decode_length"],
-          num_heads=params["num_heads"],
-          num_hidden_layers=params["num_hidden_layers"],
-          beam_size=params["beam_size"],
-          alpha=params["alpha"],
-          encoder_layer=encoder_layer,
-          decoder_layer=decoder_layer,
-          name="transformer_v2")
+      internal_model = Seq2SeqTransformer(**model_kwargs)
       ret = internal_model([inputs], training=is_train)
       outputs, scores = ret["outputs"], ret["scores"]
       return tf.keras.Model(inputs, [outputs, scores])
