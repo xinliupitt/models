@@ -108,27 +108,41 @@ class Seq2SeqTransformer(tf.keras.Model):
   """
 
   def __init__(self,
-               vocab_size=0,
-               hidden_size=0,
+               vocab_size=33708,
+               hidden_size=512,
                dropout_rate=0.0,
                padded_decode=False,
-               num_replicas=0,
-               decode_batch_size=0,
-               decode_max_length=0,
-               dtype=None,
+               num_replicas=1,
+               decode_batch_size=2048,
+               decode_max_length=97,
+               dtype=tf.float32,
                extra_decode_length=0,
-               num_heads=0,
-               num_hidden_layers=0,
-               beam_size=0,
-               alpha=0,
+               num_heads=8,
+               num_layers=6,
+               beam_size=4,
+               alpha=0.6,
                encoder_layer=None,
                decoder_layer=None,
                name=None,
                **kwargs):
     """Initialize layers to build Transformer model.
 
-    Args:
-      params: hyperparameter object defining layer sizes, dropout values, etc.
+    Arguments:
+      vocab_size: Size of vocabulary.
+      hidden_size: Size of hidden layer for embedding.
+      dropout_rate: Dropout probability.
+      padded_decode: Whether to max_sequence_length padding is used. If set
+        False, max_sequence_length padding is not used.
+      num_replicas: Number of replicas for distribution strategy.
+      decode_batch_size: batch_size for decoding.
+      decode_max_length: maximum number of steps to decode a sequence.
+      dtype: data type.
+      num_heads: Number of attention heads.
+      num_layers: Number of identical layers for Transformer architecture.
+      beam_size: Number of beams for beam search
+      alpha: The strength of length normalization for beam search.
+      encoder_layer: An initialized encoder layer.
+      decoder_layer: An initialized decoder layer.
       name: name of the model.
     """
     super(Seq2SeqTransformer, self).__init__(**kwargs)
@@ -142,7 +156,7 @@ class Seq2SeqTransformer(tf.keras.Model):
     self._dtype = dtype
     self._extra_decode_length = extra_decode_length
     self._num_heads = num_heads
-    self._num_hidden_layers = num_hidden_layers
+    self._num_layers = num_layers
     self._beam_size = beam_size
     self._alpha = alpha
     self.embedding_lookup = layers.OnDeviceEmbedding(
@@ -159,11 +173,45 @@ class Seq2SeqTransformer(tf.keras.Model):
         rate=self._dropout_rate)
     self.decoder_dropout = tf.keras.layers.Dropout(
         rate=self._dropout_rate)
+    self._name = name
 
   def get_config(self):
-    return {
-        "params": self.params,
+    config = {
+        "vocab_size":
+            self._vocab_size,
+        "hidden_size":
+            self._hidden_size,
+        "dropout_rate":
+            self._dropout_rate,
+        "padded_decode":
+            self._padded_decode,
+        "num_replicas":
+            self._num_replicas,
+        "decode_batch_size":
+            self._decode_batch_size,
+        "decode_max_length":
+            self._decode_max_length,
+        "dtype":
+            self._dtype,
+        "extra_decode_length":
+            self._extra_decode_length,
+        "num_heads":
+            self._num_heads,
+        "num_layers":
+            self._num_layers,
+        "beam_size":
+            self._beam_size,
+        "alpha":
+            self._alpha,
+        "encoder_layer":
+            self.encoder_layer,
+        "decoder_layer":
+            self.decoder_layer,
+        "name":
+            self._name
     }
+    base_config = super(Seq2SeqTransformer, self).get_config()
+    return dict(list(base_config.items()) + list(config.items()))
 
   def call(self, inputs):
     """Calculate target logits or inferred target sequences.
@@ -271,7 +319,7 @@ class Seq2SeqTransformer(tf.keras.Model):
                         batch_size, init_decode_length, num_heads, dim_per_head
                     ],
                              dtype=self._dtype)
-            } for layer in range(self._num_hidden_layers)
+            } for layer in range(self._num_layers)
         }
 
         # pylint: enable=g-complex-comprehension
