@@ -162,8 +162,6 @@ class Seq2SeqTransformer(tf.keras.Model):
     self._num_hidden_layers = num_hidden_layers
     self._beam_size = beam_size
     self._alpha = alpha
-    self._encoder_layer = encoder_layer
-    self._decoder_layer = decoder_layer
     self.embedding_lookup = layers.OnDeviceEmbedding(
         vocab_size=self._vocab_size,
         embedding_width=self._hidden_size,
