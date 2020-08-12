@@ -63,7 +63,7 @@ def create_model(params, is_train):
           dtype=params["dtype"],
           extra_decode_length=params["extra_decode_length"],
           num_heads=params["num_heads"],
-          num_hidden_layers=params["num_hidden_layers"],
+          num_layers=params["num_hidden_layers"],
           beam_size=params["beam_size"],
           alpha=params["alpha"],
           encoder_layer=encoder_layer,
