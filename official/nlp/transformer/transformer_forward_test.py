@@ -36,7 +36,7 @@ class TransformerV2Test(tf.test.TestCase):
     params["filter_size"] = 14
     params["num_heads"] = 2
     params["vocab_size"] = 41
-    params["extra_decode_length"] = 2
+    params["extra_decode_length"] = 0
     params["beam_size"] = 3
     params["dtype"] = tf.float32
     params["layer_postprocess_dropout"] = 0.0
@@ -57,7 +57,6 @@ class TransformerV2Test(tf.test.TestCase):
 
     # dest_model is the refactored model. Please create it to be different from
     # src_model
-    # dest_model = transformer.create_model(self.params, True)
     dest_model = seq2seq_transformer.create_model(self.params, True)
     dest_num_weights = _count_params(dest_model)
     if src_num_weights != dest_num_weights:
@@ -83,7 +82,6 @@ class TransformerV2Test(tf.test.TestCase):
 
     # dest_model is the refactored model. Please create it to be different from
     # src_model
-    # dest_model = transformer.create_model(self.params, False)
     dest_model = seq2seq_transformer.create_model(self.params, False)
     dest_num_weights = _count_params(dest_model)
     if src_num_weights != dest_num_weights:
