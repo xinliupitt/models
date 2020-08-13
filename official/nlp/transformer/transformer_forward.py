@@ -27,7 +27,7 @@ import tensorflow as tf
 from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
-is_train = True
+is_train = False
 get_weights_flag = False
 
 class TransformerV2Test(tf.test.TestCase):

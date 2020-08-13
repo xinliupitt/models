@@ -457,7 +457,9 @@ class Transformer(tf.keras.Model):
     """Returns a decoding function that calculates logits of the next tokens."""
     timing_signal = self.position_embedding(
         inputs=None, length=max_decode_length + 1)
+    print ("timing_signal before cast", timing_signal)
     timing_signal = tf.cast(timing_signal, self.params["dtype"])
+    print ("timing_signal after cast", timing_signal)
     decoder_self_attention_bias = model_utils.get_decoder_self_attention_bias(
         max_decode_length, dtype=self.params["dtype"])
 
