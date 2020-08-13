@@ -22,6 +22,7 @@ import numpy as np
 
 import tensorflow as tf
 
+from official.nlp.modeling.models import seq2seq_transformer
 from official.nlp.transformer import model_params
 from official.nlp.transformer import transformer
 
@@ -78,7 +79,8 @@ class TransformerV2Test(tf.test.TestCase):
 
     # dest_model is the refactored model. Please create it to be different from
     # src_model
-    dest_model = transformer.create_model(self.params, False)
+    # dest_model = transformer.create_model(self.params, False)
+    dest_model = seq2seq_transformer.create_model(self.params, False)
     dest_num_weights = _count_params(dest_model)
     if src_num_weights != dest_num_weights:
       raise ValueError("Source weights can't be set to destination model due to"
