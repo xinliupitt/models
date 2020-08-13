@@ -173,7 +173,6 @@ class Seq2SeqTransformer(tf.keras.Model):
         rate=self._dropout_rate)
     self.decoder_dropout = tf.keras.layers.Dropout(
         rate=self._dropout_rate)
-    self._name = name
 
   def get_config(self):
     config = {
@@ -206,9 +205,7 @@ class Seq2SeqTransformer(tf.keras.Model):
         "encoder_layer":
             self.encoder_layer,
         "decoder_layer":
-            self.decoder_layer,
-        "name":
-            self._name
+            self.decoder_layer
     }
     base_config = super(Seq2SeqTransformer, self).get_config()
     return dict(list(base_config.items()) + list(config.items()))
