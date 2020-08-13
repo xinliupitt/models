@@ -53,7 +53,7 @@ class TransformerV2Test(tf.test.TestCase):
     src_model = transformer.create_model(self.params, True)
     src_num_weights = _count_params(src_model)
     src_weights = src_model.get_weights()
-    src_model_output = src_model([inputs, targets], training=False)
+    src_model_output = src_model([inputs, targets], training=True)
 
     # dest_model is the refactored model. Please create it to be different from
     # src_model
@@ -64,7 +64,7 @@ class TransformerV2Test(tf.test.TestCase):
       raise ValueError("Source weights can't be set to destination model due to"
                        "different number of weights.")
     dest_model.set_weights(src_weights)
-    dest_model_output = dest_model([inputs, targets], training=False)
+    dest_model_output = dest_model([inputs, targets], training=True)
 
     # If src_model and dest_model contains dropout layers, they can't have the
     # same output. Please disable all dropout layers before test.
