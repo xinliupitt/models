@@ -28,7 +28,6 @@ class TransformerV2Test(tf.test.TestCase):
   def setUp(self):
     self.params = params = model_params.TINY_PARAMS
     params["batch_size"] = params["default_batch_size"] = 16
-    params["use_synthetic_data"] = True
     params["hidden_size"] = 12
     params["num_hidden_layers"] = 2
     params["filter_size"] = 14
