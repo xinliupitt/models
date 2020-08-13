@@ -1,4 +1,4 @@
-# Copyright 2018 The TensorFlow Authors. All Rights Reserved.
+# Copyright 2020 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Test Transformer model."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+"""Forward pass test for Transformer model refactoring."""
 
 import numpy as np
 
@@ -55,20 +51,14 @@ class TransformerV2Test(tf.test.TestCase):
     src_weights = src_model.get_weights()
     src_model_output = src_model([inputs, targets], training=True)
 
-    # dest_model is the refactored model. Please create it to be different from
-    # src_model
+    # dest_model is the refactored model.
     dest_model = seq2seq_transformer.create_model(self.params, True)
     dest_num_weights = _count_params(dest_model)
-    print ("src num", src_num_weights)
-    print ("dest num", dest_num_weights)
     if src_num_weights != dest_num_weights:
       raise ValueError("Source weights can't be set to destination model due to"
                        "different number of weights.")
     dest_model.set_weights(src_weights)
     dest_model_output = dest_model([inputs, targets], training=True)
-
-    # If src_model and dest_model contains dropout layers, they can't have the
-    # same output. Please disable all dropout layers before test.
     self.assertAllEqual(src_model_output, dest_model_output)
 
 
@@ -82,20 +72,14 @@ class TransformerV2Test(tf.test.TestCase):
     src_weights = src_model.get_weights()
     src_model_output = src_model([inputs], training=False)
 
-    # dest_model is the refactored model. Please create it to be different from
-    # src_model
+    # dest_model is the refactored model.
     dest_model = seq2seq_transformer.create_model(self.params, False)
     dest_num_weights = _count_params(dest_model)
-    print ("src num", src_num_weights)
-    print ("dest num", dest_num_weights)
     if src_num_weights != dest_num_weights:
       raise ValueError("Source weights can't be set to destination model due to"
                        "different number of weights.")
     dest_model.set_weights(src_weights)
     dest_model_output = dest_model([inputs], training=False)
-
-    # If src_model and dest_model contains dropout layers, they can't have the
-    # same output. Please disable all dropout layers before test.
     self.assertAllEqual(src_model_output[0], dest_model_output[0])
     self.assertAllEqual(src_model_output[1], dest_model_output[1])
 
