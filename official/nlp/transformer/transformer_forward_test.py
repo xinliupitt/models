@@ -57,8 +57,8 @@ class TransformerV2Test(tf.test.TestCase):
 
     # dest_model is the refactored model. Please create it to be different from
     # src_model
-    dest_model = transformer.create_model(self.params, True)
-    # dest_model = seq2seq_transformer.create_model(self.params, True)
+    # dest_model = transformer.create_model(self.params, True)
+    dest_model = seq2seq_transformer.create_model(self.params, True)
     dest_num_weights = _count_params(dest_model)
     if src_num_weights != dest_num_weights:
       raise ValueError("Source weights can't be set to destination model due to"
