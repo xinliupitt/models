@@ -540,7 +540,7 @@ class TransformerEncoder(tf.keras.layers.Layer):
     super(TransformerEncoder, self).build(input_shape)
 
   def get_config(self):
-    return {
+    config = {
         "num_layers":
             self._num_layers,
         "num_attention_heads":
@@ -562,6 +562,8 @@ class TransformerEncoder(tf.keras.layers.Layer):
         "intermediate_dropout":
             self._intermediate_dropout
     }
+    base_config = super(TransformerEncoder, self).get_config()
+    return dict(list(base_config.items()) + list(config.items()))
 
   def call(self,
            encoder_inputs,
@@ -656,7 +658,7 @@ class TransformerDecoder(tf.keras.layers.Layer):
     super(TransformerDecoder, self).build(input_shape)
 
   def get_config(self):
-    return {
+    config = {
         "num_layers":
             self._num_layers,
         "num_attention_heads":
@@ -678,6 +680,8 @@ class TransformerDecoder(tf.keras.layers.Layer):
         "intermediate_dropout":
             self._intermediate_dropout
     }
+    base_config = super(TransformerDecoder, self).get_config()
+    return dict(list(base_config.items()) + list(config.items()))
 
   def call(self,
            target,
