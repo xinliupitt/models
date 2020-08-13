@@ -59,6 +59,8 @@ class TransformerV2Test(tf.test.TestCase):
     # src_model
     dest_model = seq2seq_transformer.create_model(self.params, True)
     dest_num_weights = _count_params(dest_model)
+    print ("src num", src_num_weights)
+    print ("dest num", dest_num_weights)
     if src_num_weights != dest_num_weights:
       raise ValueError("Source weights can't be set to destination model due to"
                        "different number of weights.")
@@ -84,6 +86,8 @@ class TransformerV2Test(tf.test.TestCase):
     # src_model
     dest_model = seq2seq_transformer.create_model(self.params, False)
     dest_num_weights = _count_params(dest_model)
+    print ("src num", src_num_weights)
+    print ("dest num", dest_num_weights)
     if src_num_weights != dest_num_weights:
       raise ValueError("Source weights can't be set to destination model due to"
                        "different number of weights.")
