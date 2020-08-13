@@ -39,6 +39,9 @@ class TransformerV2Test(tf.test.TestCase):
     params["extra_decode_length"] = 2
     params["beam_size"] = 3
     params["dtype"] = tf.float32
+    params["layer_postprocess_dropout"] = 0.0
+    params["attention_dropout"] = 0.0
+    params["relu_dropout"] = 0.0
 
   def test_forward_pass_train(self):
     # Set input_len different from target_len
